@@ -1,70 +1,119 @@
-# Getting Started with Create React App
+# 🏥 Health Query App 🚀
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack web application that allows users to query healthcare data using **natural language**. The app generates **SQL queries** from user input and retrieves data from the **MIMIC-III dataset**.
 
-## Available Scripts
+## 🌟 Features
+- **Natural Language Querying**: Ask healthcare-related questions, and the app will generate and run SQL queries.
+- **FastAPI Backend**: A lightweight Python backend to process queries and execute SQL.
+- **React Frontend**: A responsive, chat-style UI for user interaction.
+- **SQLite Database**: Uses MIMIC-III dataset stored as a database.
+- **Dark Mode UI**: Inspired by ChatGPT/iOS message styles.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## ⚡ Getting Started (Local Setup)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 🔹 Prerequisites
+- **Python 3.8+**
+- **Node.js 14+ & npm**
+- **SQLite**
+- **Git**
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+### 1️⃣ Clone the Repository
+Open a terminal (Mac/Linux) or PowerShell (Windows) and run:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```sh
+git clone https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
+```
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 2️⃣ Run the Setup Script
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+#### **▶️ For Mac/Linux:**
+```sh
+bash setup.sh
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+#### **▶️ For Windows (PowerShell):**
+```powershell
+.\setup.ps1
+```
 
-### `npm run eject`
+This will:
+✅ Install Python dependencies  
+✅ Start the FastAPI backend  
+✅ Install frontend dependencies  
+✅ Start the React frontend  
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Once complete, **visit:**  
+👉 `http://localhost:3000` (Frontend)  
+👉 `http://localhost:8000/docs` (API Docs)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## ⚙️ Manual Setup (If Not Using Setup Script)
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### **1️⃣ Backend (FastAPI)**
+```sh
+cd backend
+python -m venv env
+source env/bin/activate   # (Windows users: use `env\Scripts\activate`)
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
 
-## Learn More
+### **2️⃣ Frontend (React)**
+```sh
+cd frontend
+npm install
+npm start
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🛠️ Project Structure
+```
+📂 Health-Query-App/
+│── 📁 backend/             # FastAPI Backend
+│   ├── 📁 app/             # Application files
+│   │   ├── main.py         # FastAPI main app
+│   │   ├── query.py        # Query processing logic
+│   │   ├── database.py     # Database connection
+│── 📁 frontend/            # React Frontend
+│   ├── 📁 src/             # React components
+│   ├── App.js             # Main frontend UI
+│   ├── index.js           # React entry point
+│── setup.sh               # Auto-setup script (Mac/Linux)
+│── setup.ps1              # Auto-setup script (Windows)
+│── requirements.txt       # Python dependencies
+│── package.json           # Frontend dependencies
+│── README.md              # Project documentation
+```
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 🔄 API Endpoints (FastAPI)
+| Method | Endpoint | Description |
+|--------|----------|------------|
+| `POST` | `/query` | Send a natural language query & get SQL result |
+| `GET`  | `/docs`  | View API documentation |
 
-### Analyzing the Bundle Size
+Example Request:
+```sh
+curl -X POST "http://localhost:8000/query" \
+     -H "Content-Type: application/json" \
+     -d '{"user_query": "How many visits did patient 10009 have in the last month?"}'
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+## 🚀 Deployment (GitHub Actions)
+This project supports **GitHub Actions CI/CD** for:
+- **Automated Testing**
+- **Linting & Code Quality Checks**
+- **Deployment to a Cloud Server (Optional)**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
