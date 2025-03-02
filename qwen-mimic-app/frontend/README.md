@@ -108,12 +108,3 @@ curl -X POST "http://localhost:8000/query" \
      -H "Content-Type: application/json" \
      -d '{"user_query": "How many visits did patient 10009 have in the last month?"}'
 ```
-
----
-
-## 🚀 Deployment (GitHub Actions)
-This project supports **GitHub Actions CI/CD** for:
-- **Automated Testing**
-- **Linting & Code Quality Checks**
-- **Deployment to a Cloud Server (Optional)**
-
