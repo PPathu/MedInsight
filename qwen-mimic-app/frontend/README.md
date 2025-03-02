@@ -78,18 +78,18 @@ npm start
 ## 🛠️ Project Structure
 ```
 📂 Health-Query-App/
-│── 📁 backend/             # FastAPI Backend
-│   ├── 📁 app/             # Application files
-│   │   ├── main.py         # FastAPI main app
-│   │   ├── query.py        # Query processing logic
-│   │   ├── database.py     # Database connection
-│── 📁 frontend/            # React Frontend
-│   ├── 📁 src/             # React components
+│── 📁 backend/              # FastAPI Backend
+│   ├── 📁 app/              # Application files
+│   │   ├── main.py          # FastAPI main app
+│   │   ├── query.py         # Query processing logic
+│   │   ├── database.py      # Database connection
+│   │   ├── requirements.txt # Python dependencies
+│── 📁 frontend/             # React Frontend
+│   ├── 📁 src/              # React components
 │   ├── App.js             # Main frontend UI
 │   ├── index.js           # React entry point
 │── setup.sh               # Auto-setup script (Mac/Linux)
 │── setup.ps1              # Auto-setup script (Windows)
-│── requirements.txt       # Python dependencies
 │── package.json           # Frontend dependencies
 │── README.md              # Project documentation
 ```
