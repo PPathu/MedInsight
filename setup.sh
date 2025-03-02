@@ -2,19 +2,49 @@
 
 echo "🔧 Setting up the project..."
 
-# 1️⃣ Set up Python environment
-echo "🐍 Setting up Python virtual environment..."
-python3 -m venv env
+# 🐍 Python Setup and 🚀 Starting FastAPI backend
+echo "🐍 Setting up Python virtual environment and 🚀 Starting FastAPI backend..."
+
+# Check if the backend directory exists
+if [ ! -d "qwen-mimic-app/backend" ]; then
+    echo "❌ Backend directory missing!"
+    exit 1
+fi
+
+cd qwen-mimic-app/backend
+
+# Create virtual environment if it doesn't exist
+if [ ! -d "env" ]; then
+    python3 -m venv env
+fi
+
+# Activate virtual environment
 source env/bin/activate
+
+# Upgrade pip and install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# 2️⃣ Run FastAPI backend
-echo "🚀 Starting FastAPI backend..."
+# Start FastAPI backend in the background
 nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 &
 
-# 3️⃣ Set up frontend
+# 🌐 React Frontend Setup
 echo "🌐 Setting up React frontend..."
-cd frontend
+
+# Check if the frontend directory exists
+if [ ! -d "../frontend" ]; then
+    echo "❌ Frontend directory missing!"
+    exit 1
+fi
+
+cd ../frontend
+
+# If package.json is missing, initialize a React project
+if [ ! -f "package.json" ]; then
+    echo "⚠️ No package.json found. Initializing React project..."
+    npx create-react-app .
+fi
+
+# Install frontend dependencies and start the React app
 npm install
 npm start
