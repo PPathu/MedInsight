@@ -1,0 +1,199 @@
+/* 🌙 Dark Theme */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #181818;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* 🔹 Main Layout */
+.app-layout {
+    display: flex;
+    width: 90vw;
+    height: 90vh;
+    max-width: 1200px;
+    background-color: #202123;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* 📌 Left Panel (User Input Section) */
+.left-panel {
+    width: 35%;
+    background-color: #282828;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centers input field */
+    align-items: center; /* Centers input field */
+    padding: 20px;
+    border-right: 1px solid #3a3a3a;
+    height: 100%;
+}
+
+/* 📌 Query Input Section */
+.query-input {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #282828;
+    padding: 15px;
+}
+
+/* 📌 Container to Ensure Equal Widths */
+.query-container {
+    width: 250px; /* Fixed width for both elements */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 📌 Text Input (Same Width as Button) */
+.query-textarea {
+    width: 100%; /* Matches container */
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #444;
+    background-color: #303030;
+    color: white;
+    border-radius: 5px;
+    resize: none;
+    overflow: hidden;
+    min-height: 30px;
+    max-height: 100px;
+    text-align: center;
+}
+
+/* Center Placeholder Text */
+.query-textarea::placeholder {
+    text-align: center;
+    color: #aaa;
+}
+
+/* 📌 Submit Button (Same Width as Input) */
+.query-submit-btn {
+    width: 100%; /* Matches container */
+    padding: 8px;
+    font-size: 14px;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.2s;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.query-submit-btn:hover {
+    background-color: #0b5ed7;
+}
+
+/* 📌 Right Panel (Chat Messages) */
+.chat-panel {
+    width: 65%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    max-height: 90vh;
+    background-color: #181818;
+}
+
+/* 🔹 Chat Messages Container */
+.chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 30px; /* Adds spacing between outputs */
+    padding: 20px;
+    overflow-y: auto;
+    align-items: center;
+}
+
+/* 🔹 Chat Bubbles Container (Aligned in Pairs) */
+.chat-bubble-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 70%;
+    max-width: 600px;
+}
+
+/* User Query Bubble */
+.chat-bubble.user-query {
+    background-color: #0d6efd;
+    color: white;
+    padding: 8px; /* Reduce padding to make it smaller */
+    border-radius: 10px;
+    max-width: 100%;
+    align-self: center;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    font-size: 14px; /* Reduce font size slightly */
+}
+
+/* Bot Response Bubble */
+.chat-bubble.bot-response {
+    background-color: #333;
+    color: #e0e0e0;
+    padding: 12px;
+    border-radius: 10px;
+    max-width: 100%;
+    align-self: center;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 📌 Ensure Responses Look Readable */
+.bot-response pre {
+    background-color: #222;
+    color: #0f0;
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+}
+
+/* 🔹 Auto-Scroll to Latest Message */
+.chat-messages {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow-y: auto;
+    height: 100%;
+    padding-bottom: 20px;
+    scroll-behavior: smooth;
+}
+
+/* 📌 Timestamp Styling */
+.timestamp {
+    font-size: 12px;
+    color: #aaa;
+    text-align: center;
+    display: block;
+    margin-bottom: 5px;
+}
+
+/* 🔹 Mobile-Friendly */
+@media (max-width: 900px) {
+    .app-layout {
+        flex-direction: column;
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .left-panel, .chat-panel {
+        width: 100%;
+        height: 50%;
+    }
+
+    .chat-bubble-container {
+        width: 90%;
+    }
+}

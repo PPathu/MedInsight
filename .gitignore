@@ -1,0 +1,20 @@
+# Ignore virtual environments and Python libraries
+env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore large PyTorch libraries
+*.dylib
+*.so
+*.dll
+
+echo "mimic-app/backend/env/lib/python3.12/site-packages/torch/lib/libtorch_cpu.dylib" >> .gitignore
+echo "env/" >> .gitignore
+echo "venv/" >> .gitignore
+echo "__pycache__/" >> .gitignore
+*.dylib
+.env
+
