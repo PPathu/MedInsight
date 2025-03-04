@@ -10,11 +10,24 @@ if (!(Test-Path "env")) {
 }
 
 # Activate virtual environment
-env\Scripts\Activate
+& env\Scripts\Activate
 
 # Upgrade pip and install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
+
+# 📄 Create .env file in backend directory if it doesn't exist
+$envFile = ".env"
+if (!(Test-Path $envFile)) {
+    Write-Host "📄 Creating .env file..."
+    @"
+QWEN_API_KEY=Enter_Your_API_Key_Here
+MIMIC_DB_PATH="Enter Your Path To The MIMIC3.db file here"
+"@ | Out-File -Encoding utf8 -FilePath $envFile
+    Write-Host "✅ .env file created!"
+} else {
+    Write-Host "✅ .env file already exists, skipping creation."
+}
 
 # Start FastAPI backend in the background
 Start-Process -NoNewWindow -FilePath "uvicorn" -ArgumentList "app.main:app --host 0.0.0.0 --port 8000"
