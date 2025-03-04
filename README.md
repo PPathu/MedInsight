@@ -49,6 +49,33 @@ This will:
 ✅ Install frontend dependencies  
 ✅ Start the React frontend  
 
+---
+
+### 3️⃣ Update the `.env` File
+After running the setup script, **you need to update the `.env` file** with your API key and database path.
+
+1. Open the `.env` file located in `qwen-mimic-app/backend/`
+2. Replace the placeholders with your actual values:
+   ```ini
+   QWEN_API_KEY=your_api_key_here
+   MIMIC_DB_PATH="absolute/path/to/MIMIC3.db"
+   ```
+   - **For example**, on Linux/Mac:
+     ```ini
+     MIMIC_DB_PATH="/home/user/qwen-mimic-app/backend/data/MIMIC3.db"
+     ```
+   - **On Windows** (use double backslashes `\\`):
+     ```ini
+     MIMIC_DB_PATH="C:\\Users\\yourname\\qwen-mimic-app\\backend\\data\\MIMIC3.db"
+     ```
+
+3. **Save the file** and restart the backend:
+   ```sh
+   cd qwen-mimic-app/backend
+   source env/bin/activate   # (Windows users: use `env\Scripts\activate`)
+   uvicorn app.main:app --host 0.0.0.0 --port 8000
+   ```
+
 Once complete, **visit:**  
 👉 `http://localhost:3000` (Frontend)  
 👉 `http://localhost:8000/docs` (API Docs)
@@ -84,14 +111,15 @@ npm start
 │   │   ├── query.py         # Query processing logic
 │   │   ├── database.py      # Database connection
 │   │   ├── requirements.txt # Python dependencies
+│   ├── .env                 # Environment variables (API key & DB path)
 │── 📁 frontend/             # React Frontend
 │   ├── 📁 src/              # React components
-│   ├── App.js             # Main frontend UI
-│   ├── index.js           # React entry point
-│── setup.sh               # Auto-setup script (Mac/Linux)
-│── setup.ps1              # Auto-setup script (Windows)
-│── package.json           # Frontend dependencies
-│── README.md              # Project documentation
+│   ├── App.js               # Main frontend UI
+│   ├── index.js             # React entry point
+│── setup.sh                 # Auto-setup script (Mac/Linux)
+│── setup.ps1                # Auto-setup script (Windows)
+│── package.json             # Frontend dependencies
+│── README.md                # Project documentation
 ```
 
 ---
@@ -108,3 +136,4 @@ curl -X POST "http://localhost:8000/query" \
      -H "Content-Type: application/json" \
      -d '{"user_query": "How many visits did patient 10009 have in the last month?"}'
 ```
+---
