@@ -1,4 +1,4 @@
-# 🏥 Health Query App 🚀
+# 🏥 MedInsight 🚀
 
 A full-stack web application that allows users to query healthcare data using **natural language**. The app generates **SQL queries** from user input and retrieves data from the **MIMIC-III dataset**.
 
