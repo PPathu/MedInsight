@@ -9,7 +9,7 @@ const ResponseDisplay = ({ sqlCode, queryResult }) => {
             </div>
             <div className="result-section">
                 <h3>Query Result:</h3>
-                <pre>{queryResult.length > 0 ? JSON.stringify(queryResult, null, 2) : "No results yet."}</pre>
+                <pre>{queryResult?.length > 0 ? JSON.stringify(queryResult, null, 2) : "No results yet."}</pre>
             </div>
         </div>
     );

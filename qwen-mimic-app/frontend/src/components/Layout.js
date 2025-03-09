@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import QueryInput from "./QueryInput";
 import { sendQuery } from "../api";
+import Loader from "./Loader"; 
 
 const Layout = () => {
     const [history, setHistory] = useState([]);
@@ -8,59 +9,106 @@ const Layout = () => {
 
     const handleQuerySubmit = async (userQuery) => {
         if (!userQuery.trim()) return;
+        const newMessageId = Date.now();
+        const timestamp = new Date().toLocaleString();
 
-        const response = await sendQuery(userQuery);
+        // Insert a loading entry into history
+        const loadingEntry = {
+            id: newMessageId,
+            userQuery,
+            generatedCode: null,
+            queryResult: null,
+            timestamp,
+            loading: true,
+        };
 
-        const timestamp = new Date().toLocaleString(); // Format: "MM/DD/YYYY, HH:MM:SS AM/PM"
+        setHistory((prevHistory) => [...prevHistory, loadingEntry]);
 
-        setHistory(prevHistory => [
-            ...prevHistory,
-            {
-                userQuery,
-                generatedCode: response.generated_code || "Error generating SQL",
-                queryResult: response.result || [],
-                timestamp, // Store timestamp
-            }
-        ]);
+        try {
+            const response = await sendQuery(userQuery);
+            setHistory((prevHistory) =>
+                prevHistory.map((entry) =>
+                    entry.id === newMessageId
+                        ? {
+                              ...entry,
+                              generatedCode:
+                                  response.generated_code || "Error generating SQL",
+                              queryResult: response.result || [],
+                              loading: false,
+                          }
+                        : entry
+                )
+            );
+        } catch (error) {
+            console.error("Error in sendQuery:", error);
+            setHistory((prevHistory) =>
+                prevHistory.map((entry) =>
+                    entry.id === newMessageId
+                        ? {
+                              ...entry,
+                              generatedCode: "Error generating SQL",
+                              queryResult: [],
+                              loading: false,
+                          }
+                        : entry
+                )
+            );
+        }
     };
 
-    // Auto-scroll to latest message
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [history]);
 
     return (
-        <div className="app-layout">
-            {/* Left Panel: User Input */}
-            <div className="left-panel">
-                <QueryInput onQuerySubmit={handleQuerySubmit} />
-            </div>
+        <div className="app-container">
+            {/* Sidebar for chat history */}
+            <aside className="sidebar">
+                <h2>Chat History</h2>
+                <ul>
+                    {history.map((entry) => (
+                        <li key={entry.id} className="history-item">
+                            {entry.userQuery}
+                        </li>
+                    ))}
+                </ul>
+            </aside>
 
-            {/* Right Panel: Chat-Style Responses */}
-            <div className="chat-panel">
+            {/* Main Chat Window */}
+            <main className="chat-container">
                 <div className="chat-messages">
-                    {history.map((entry, index) => (
-                        <div key={index} className="chat-bubble-container">
-                            {/* Timestamp */}
+                    {history.map((entry) => (
+                        <div key={entry.id} className="chat-bubble-container">
                             <span className="timestamp">{entry.timestamp}</span>
 
-                            {/* User Query */}
                             <div className="chat-bubble user-query">
                                 {entry.userQuery}
                             </div>
 
-                            {/* AI Response */}
                             <div className="chat-bubble bot-response">
-                                <strong>SQL Code:</strong>
-                                <pre>{entry.generatedCode}</pre>
-                                <strong>Query Result:</strong>
-                                <pre>{JSON.stringify(entry.queryResult, null, 2)}</pre>
+                                {entry.loading ? (
+                                    <Loader />
+                                ) : (
+                                    <>
+                                        <strong>SQL Code:</strong>
+                                        <pre>{entry.generatedCode}</pre>
+                                        <strong>Query Result:</strong>
+                                        <pre>
+                                            {JSON.stringify(entry.queryResult, null, 2)}
+                                        </pre>
+                                    </>
+                                )}
                             </div>
                         </div>
                     ))}
                     <div ref={messagesEndRef} />
                 </div>
-            </div>
+
+                {/* Input Field Fixed at Bottom */}
+                <div className="chat-input">
+                    <QueryInput onQuerySubmit={handleQuerySubmit} />
+                </div>
+            </main>
         </div>
     );
 };

@@ -1,46 +1,70 @@
 import React, { useState, useRef } from "react";
-import "../styles.css"; // Ensure this is imported
+import "../styles/QueryInput.css"; 
 
 const QueryInput = ({ onQuerySubmit }) => {
     const [query, setQuery] = useState("");
-    const textAreaRef = useRef(null);
+    const textareaRef = useRef(null);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (query.trim() === "") return;
-        onQuerySubmit(query);
-        setQuery(""); 
-        if (textAreaRef.current) {
-            textAreaRef.current.style.height = "30px"; // Reset height after submission
+    const adjustTextareaHeight = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        textarea.style.height = "auto"; 
+        if (textarea.scrollHeight > textarea.clientHeight) {
+            textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`; 
         }
     };
 
-    const handleInputChange = (e) => {
+    const handleChange = (e) => {
         setQuery(e.target.value);
-        if (textAreaRef.current) {
-            textAreaRef.current.style.height = "30px"; // Reset to default
-            if (textAreaRef.current.scrollHeight > textAreaRef.current.clientHeight) {
-                textAreaRef.current.style.height = `${textAreaRef.current.scrollHeight}px`;
+        adjustTextareaHeight();
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter") {
+            if (e.shiftKey) {
+                // Shift + Enter → Add a new line
+                e.preventDefault(); 
+                setQuery((prev) => prev + "\n");
+                setTimeout(() => adjustTextareaHeight(), 0); 
+            } else {
+                // Enter → Submit the form
+                e.preventDefault(); 
+                handleSubmit(e);
             }
         }
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!query.trim()) return;
+        onQuerySubmit(query);
+        setQuery(""); // Clear input after submission
+        textareaRef.current.style.height = "50px"; // Reset height after submit
+    };
+
     return (
-        <div className="query-input">
-            <div className="query-container">
+        <form id="query-form" onSubmit={handleSubmit}>
+            <div id="query-container">
                 <textarea
-                    ref={textAreaRef}
-                    className="query-textarea"
-                    placeholder="Ask a data-related question..."
+                    ref={textareaRef}
+                    className="query-input"
                     value={query}
-                    onChange={handleInputChange}
-                    rows={1}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask a question..."
+                    rows="1"
                 />
-                <button type="submit" className="query-submit-btn" onClick={handleSubmit}>
-                    Submit
+                <button type="submit" className="submit-btn">
+                    <span className="circle1"></span>
+                    <span className="circle2"></span>
+                    <span className="circle3"></span>
+                    <span className="circle4"></span>
+                    <span className="circle5"></span>
+                    <span className="text">Submit</span>
                 </button>
             </div>
-        </div>
+        </form>
     );
 };
 

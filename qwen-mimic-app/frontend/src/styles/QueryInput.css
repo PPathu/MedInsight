@@ -1,0 +1,131 @@
+#poda {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    padding-bottom: 25px;
+}
+
+/* Center and ensure correct initial size */
+#main {
+    position: relative;
+    width: 550px; 
+    min-height: 50px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 0; 
+}
+
+/* Placeholder Style */
+.input::placeholder {
+    color: #c0b9c0;
+    font-size: 18px;
+    line-height: normal;
+    padding-top: 5px;
+}
+
+/* Query Input Form */
+#query-form {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Main Container */
+#query-container {
+    position: relative;
+    width: 550px;
+    display: flex;
+    align-items: center;
+    background-color: #171717;
+    border-radius: 12px;
+    padding: 5px;
+    z-index: 1; 
+}
+
+/* Dynamic Textarea */
+.query-input {
+    background-color: #000000b3;
+    border: none;
+    width: 100%;
+    min-height: 50px;
+    max-height: 200px;
+    border-radius: 12px;
+    color: white;
+    padding: 12px 90px 12px 15px; 
+    font-size: 18px;
+    resize: none;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    transition: height 0.2s ease-in-out;
+    z-index: 2; 
+}
+
+/* Placeholder Style */
+.query-input::placeholder {
+    color: #c0b9c0;
+    font-size: 18px;
+}
+
+/* Focus Effect */
+.query-input:focus {
+    outline: none;
+    box-shadow: 0 0 25px rgb(255, 255, 255);
+}
+
+/* Submit Button */
+.submit-btn { 
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    color: white;
+    background-color: #202123;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 0.6rem;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    overflow: hidden;
+    font-size: 16px;
+    z-index: 3; 
+    transition: all 0.8s ease-in-out; 
+}
+
+/* Hover Effect - Text Turns Black */
+.submit-btn:hover {
+    color: black; 
+    background-color: #ffffff; 
+}
+
+/* Button Animation */
+.submit-btn span:not(:nth-child(6)) {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    height: 30px;
+    width: 30px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    transition: 1s ease;
+}
+
+.submit-btn span:nth-child(6) {
+    position: relative;
+}
+
+.submit-btn span:nth-child(1) { transform: translate(-3.3em, -4em); }
+.submit-btn span:nth-child(2) { transform: translate(-6em, 1.3em); }
+.submit-btn span:nth-child(3) { transform: translate(-.2em, 1.8em); }
+.submit-btn span:nth-child(4) { transform: translate(3.5em, 1.4em); }
+.submit-btn span:nth-child(5) { transform: translate(3.5em, -3.8em); }
+
+.submit-btn:hover span:not(:nth-child(6)) {
+    transform: translate(-50%, -50%) scale(4);
+    transition: 1.5s ease;
+}
