@@ -10,7 +10,7 @@
 /* Center and ensure correct initial size */
 #main {
     position: relative;
-    width: 550px; 
+    width: 950px; 
     min-height: 50px; 
     display: flex;
     align-items: center;
@@ -36,7 +36,7 @@
 /* Main Container */
 #query-container {
     position: relative;
-    width: 550px;
+    width: 695px; /* Changed from 550px to match #main */
     display: flex;
     align-items: center;
     background-color: #171717;
