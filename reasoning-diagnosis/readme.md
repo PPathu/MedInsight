@@ -1,9 +1,9 @@
 # Reasoning with LLM for Sepsis Diagnosis
 
 ## Overview
-This repository contains code and queries for reasoning about sepsis diagnosis using a large language model (DeepSeek) and structured patient data from the MIMIC-IV dataset.
+This Directory contains code and queries for reasoning about sepsis diagnosis using a large language model (DeepSeek) and structured patient data from the MIMIC-IV dataset.
 
-## Repository Structure
+## Directory Structure
 - **`Sepsis_Diagnosis_Week3.ipynb`**: Jupyter Notebook implementing data preprocessing and reasoning with deepseek. 
 - **`sample_query.sql`**: SQL queries for retrieving patient records with sepsis-related diagnoses, lab results, and clinical notes from the MIMIC-IV dataset.
 
