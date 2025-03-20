@@ -30,7 +30,7 @@ if [ ! -f ".env" ]; then
     echo "📄 Creating .env file..."
     cat <<EOL > .env
 QWEN_API_KEY=Enter_Your_API_Key_Here
-MIMIC_DB_PATH="Enter Your Path To The MIMIC3.db file here"
+MIMIC_DB_PATH="Enter Your Path To The MIMIC4.db file here"
 EOL
     echo "✅ .env file created!"
 else

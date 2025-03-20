@@ -22,3 +22,7 @@ def process_query(user_query: dict):
     generated_sql = get_qwen_generated_code(query_text)
     result = execute_sql_query(generated_sql)
     return {"generated_code": generated_sql, "result": result}
+
+# ----- NEW: Mount the Diagnose Router -----
+from app.diagnose import router as diagnose_router
+app.include_router(diagnose_router)
