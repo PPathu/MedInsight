@@ -1,13 +1,12 @@
 # 🏥 MedInsight 🚀
 
-A full-stack web application that allows users to query healthcare data using **natural language**. The app generates **SQL queries** from user input and retrieves data from the **MIMIC-III dataset**.
+A full-stack web application that allows users to query healthcare data using **natural language**. The app generates **SQL queries** from user input and retrieves data from the **MIMIC-IV dataset**.
 
 ## 🌟 Features
-- **Natural Language Querying**: Ask healthcare-related questions, and the app will generate and run SQL queries.
-- **FastAPI Backend**: A lightweight Python backend to process queries and execute SQL.
+- **Natural Language Querying**: Ask healthcare-related questions, and the app will generate and run SQL queries based on NPL reasoning.
+- **FastAPI Backend**: A lightweight Python backend to process and reason queries and execute SQL.
 - **React Frontend**: A responsive, chat-style UI for user interaction.
-- **SQLite Database**: Uses MIMIC-III dataset stored as a database.
-- **Dark Mode UI**: Inspired by ChatGPT/iOS message styles.
+- **SQLite Database**: Uses MIMIC-IV dataset stored as a database.
 
 ---
 
