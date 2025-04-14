@@ -28,15 +28,14 @@
 
 /* Query Input Form */
 #query-form {
-    display: flex;
-    justify-content: center;
     width: 100%;
+    margin-top: 10px;
 }
 
 /* Main Container */
 #query-container {
     position: relative;
-    width: 695px; /* Changed from 550px to match #main */
+    width: 100%;
     display: flex;
     align-items: center;
     background-color: #171717;
@@ -64,7 +63,7 @@
     z-index: 2; 
 }
 
-/* Placeholder Style */
+/* Placeholder Style - works in both themes */
 .query-input::placeholder {
     color: #c0b9c0;
     font-size: 18px;
@@ -73,7 +72,6 @@
 /* Focus Effect */
 .query-input:focus {
     outline: none;
-    box-shadow: 0 0 25px rgb(255, 255, 255);
 }
 
 /* Submit Button */
@@ -128,4 +126,24 @@
 .submit-btn:hover span:not(:nth-child(6)) {
     transform: translate(-50%, -50%) scale(4);
     transition: 1.5s ease;
+}
+
+/* Light theme overrides - will be applied when .light-theme is active */
+.light-theme #query-container {
+    background-color: #f5f7fa;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .query-input {
+    background-color: transparent;
+    color: #333;
+}
+
+.light-theme .submit-btn {
+    background-color: #3498db;
+}
+
+.light-theme .submit-btn:hover {
+    background-color: #2980b9;
+    color: white;
 }

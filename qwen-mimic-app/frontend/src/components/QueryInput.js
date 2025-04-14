@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import "../styles/QueryInput.css"; 
 
-const QueryInput = ({ onQuerySubmit }) => {
+const QueryInput = ({ onQuerySubmit, placeholder = "Ask a question...", buttonText = "Submit" }) => {
     const [query, setQuery] = useState("");
     const textareaRef = useRef(null);
 
@@ -52,7 +52,7 @@ const QueryInput = ({ onQuerySubmit }) => {
                     value={query}
                     onChange={handleChange}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ask a question..."
+                    placeholder={placeholder}
                     rows="1"
                 />
                 <button type="submit" className="submit-btn">
@@ -61,7 +61,7 @@ const QueryInput = ({ onQuerySubmit }) => {
                     <span className="circle3"></span>
                     <span className="circle4"></span>
                     <span className="circle5"></span>
-                    <span className="text">Submit</span>
+                    <span className="text">{buttonText}</span>
                 </button>
             </div>
         </form>

@@ -1,23 +1,45 @@
-attrs==23.2.0
-certifi==2023.11.17
-dotenv==0.9.9
-fastapi==0.115.11
-h11==0.14.0
-idna==3.6
-numpy==2.1.3
-outcome==1.3.0.post0
-pandas==2.2.3
-PySocks==1.7.1
-python-dateutil==2.9.0.post0
-pytz==2024.2
-requests==2.32.3
-selenium==4.16.0
-six==1.16.0
-sniffio==1.3.0
-sortedcontainers==2.4.0
-trio==0.24.0
-trio-websocket==0.11.1
-tzdata==2024.2
-urllib3==2.1.0
-uvicorn==0.34.0
-wsproto==1.2.0
+# Core web framework
+fastapi>=0.115.1
+uvicorn>=0.23.2
+pydantic>=2.4.2
+
+# Database interaction
+SQLAlchemy>=2.0.23
+
+# Utilities
+python-dotenv>=1.0.0
+requests>=2.32.3
+numpy>=1.26.0
+pandas>=2.1.1
+regex>=2023.6.3
+pyyaml>=6.0.1
+filelock>=3.12.2
+
+# Main ML dependencies
+torch>=2.2.0; platform_machine != 'arm64'
+torch>=2.2.0; platform_machine == 'arm64'  # For Apple Silicon
+transformers>=4.36.0
+tokenizers>=0.15.0
+huggingface-hub>=0.19.0
+safetensors>=0.4.0
+
+# VLLM for NVIDIA GPUs (optional, will be skipped on unsupported hardware)
+vllm>=0.3.2; sys_platform != 'darwin' or platform_machine != 'arm64'
+
+# ML optimizations
+accelerate>=0.25.0
+bitsandbytes>=0.41.0; platform_machine != 'arm64'  # Not supported on ARM
+peft>=0.5.0
+scipy>=1.11.0
+einops>=0.6.1
+sentencepiece>=0.1.99
+
+# For Apple Silicon / M1 Mac specific optimizations
+optimum>=1.16.2; platform_machine == 'arm64'
+
+# Logging and monitoring
+rich>=14.0.0
+tqdm>=4.65.0
+
+# Scientific computing
+scikit-learn>=1.3.0
