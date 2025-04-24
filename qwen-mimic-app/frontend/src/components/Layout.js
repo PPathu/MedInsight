@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import QueryInput from "./QueryInput";
-import ThemeToggle from "./ThemeToggle";
 import { sendQuery, startDiagnosis, provideInfo } from "../api";
-import Loader from "./Loader"; 
+import Loader from "./Loader";
+import CriteriaSelector from "./CriteriaSelector";
+import Header from "./Header";
+import ThemeToggle from "./ThemeToggle";
+import jsPDF from 'jspdf';
 
 // Progress bar component for model loading
 const ProgressBar = ({ progress, label }) => {
@@ -54,6 +57,8 @@ const Layout = () => {
     const [isDarkTheme, setIsDarkTheme] = useState(true); // Start with dark theme
     const [modelProgress, setModelProgress] = useState(null);
     const [showDebugPanel, setShowDebugPanel] = useState(false); // State for toggling debug panel
+    const [showCriteriaModal, setShowCriteriaModal] = useState(false);
+    const [criteriaRefreshKey, setCriteriaRefreshKey] = useState(0); // Used to force header to refresh
     const messagesEndRef = useRef(null);
 
     // Toggle between dark and light themes
@@ -64,6 +69,24 @@ const Layout = () => {
     // Toggle debug panel
     const toggleDebugPanel = () => {
         setShowDebugPanel(!showDebugPanel);
+    };
+    
+    // Toggle criteria modal
+    const toggleCriteriaModal = () => {
+        setShowCriteriaModal(!showCriteriaModal);
+    };
+    
+    // Handle criteria change (force header to refresh)
+    const handleCriteriaChange = () => {
+        // Force Header component to re-render by updating the key
+        const newKey = `criteria_refresh_${Date.now()}`;
+        console.log('Layout: Updating criteria refresh key:', newKey);
+        
+        // Briefly delay to ensure backend has time to update
+        setTimeout(() => {
+            setCriteriaRefreshKey(newKey);
+            console.log('Layout: Criteria refresh key updated');
+        }, 300);
     };
 
     // Apply theme to body element
@@ -459,135 +482,187 @@ const Layout = () => {
         }
     }, []);
 
-    return (
-        <div className={`app-container ${!isDarkTheme ? 'light-theme' : ''}`}>
-            {/* Theme Toggle */}
-            <ThemeToggle isDarkTheme={isDarkTheme} toggleTheme={toggleTheme} />
+    // Function to generate and download PDF from chat history
+    const downloadChatHistory = () => {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 20;
+        const contentWidth = pageWidth - (margin * 2);
+        const lineHeight = 7;
+        let yPosition = 20;
+        
+        // Add title
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Chat History', margin, yPosition);
+        yPosition += lineHeight * 2;
+        
+        // Format the conversation history as pretty JSON
+        const jsonString = JSON.stringify(conversationHistory, null, 2);
+        
+        // Set monospace font for code
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(9); // Smaller font size for JSON
+        doc.setCharSpace(0);
+        
+        // Split content into lines that fit the page width
+        const textLines = doc.splitTextToSize(jsonString, contentWidth);
+        
+        // Add lines to the PDF
+        textLines.forEach(line => {
+            // Check if we need a new page
+            if (yPosition > doc.internal.pageSize.getHeight() - 30) {
+                doc.addPage();
+                yPosition = 20;
+            }
             
-            {/* Sidebar for chat history */}
-            <aside className="sidebar">
-                <h2>MedInsight</h2>
-                <p className="sidebar-info">
-                    This system uses a database-first approach for medical diagnosis.
-                    The AI will query the database for relevant patient information before 
-                    asking you questions.
-                </p>
-                <h3>Session History</h3>
-                <ul className="session-list">
-                    {history
-                        .filter(entry => entry.type === "user-query")
-                        .map((entry) => (
-                            <li key={entry.id} className="history-item">
-                                {entry.content.substring(0, 30)}
-                                {entry.content.length > 30 ? "..." : ""}
-                            </li>
-                        ))}
-                </ul>
-            </aside>
+            doc.text(line, margin, yPosition);
+            yPosition += lineHeight;
+        });
+        
+        // Save the PDF
+        doc.save('chat-history.pdf');
+    };
 
-            {/* Main Chat Window */}
-            <main className="chat-container">
-                {/* Debug toggle button */}
-                <button 
-                    className="debug-toggle-button" 
-                    onClick={toggleDebugPanel}
-                    title="Toggle Debug Panel"
-                >
-                    {showDebugPanel ? 'Hide Debug Info' : 'Show Debug Info'}
-                </button>
-                
-                {/* Debug panel */}
-                {showDebugPanel && (
-                    <div className="debug-panel">
-                        <h3>Conversation History</h3>
-                        <pre className="debug-content">
-                            {JSON.stringify(conversationHistory, null, 2)}
-                        </pre>
-                        
-                        <h3>Current Thinking Process</h3>
-                        <pre className="debug-content">
-                            {thinking || 'No thinking process available'}
-                        </pre>
-                        
-                        <h3>Current Answer</h3>
-                        <pre className="debug-content">
-                            {displayedAnswer || 'No answer available'}
-                        </pre>
-                    </div>
-                )}
-                
-                <div className="chat-messages">
-                    {history.map((entry) => (
-                        <div key={entry.id} className="chat-bubble-container">
-                            <span className="timestamp">{entry.timestamp}</span>
+    return (
+        <div className={`app-container ${isDarkTheme ? 'dark' : 'light'}`}>
+            <Header 
+                key={criteriaRefreshKey} // Add key to force re-render when criteria changes
+                forceUpdate={criteriaRefreshKey} // Pass the key as a prop to trigger useEffect
+                isDarkTheme={isDarkTheme}
+                toggleDebugPanel={toggleDebugPanel}
+                showDebugPanel={showDebugPanel}
+                toggleCriteriaModal={toggleCriteriaModal}
+                downloadChatHistory={downloadChatHistory} // Add the download function as a prop
+            />
 
-                            {entry.type === "user-query" && (
-                                <div className="chat-bubble user-query">
-                                    <strong>Patient Query:</strong>
-                                    <p>{entry.content}</p>
-                                </div>
-                            )}
-                            
-                            {entry.type === "user-response" && (
-                                <div className="chat-bubble user-response">
-                                    <strong>Additional Information:</strong>
-                                    <p>{entry.content}</p>
-                                </div>
-                            )}
-                            
-                            {entry.type === "system-message" && (
-                                <div className="chat-bubble system-message">
-                                    <strong>{entry.title}:</strong>
-                                    {entry.title === "Reasoning" ? (
-                                        <div className="thinking-content">
-                                            <pre className="thinking-text">{entry.content}</pre>
-                                        </div>
-                                    ) : entry.title === "Diagnosis" ? (
-                                        <div className="answer-content">
-                                            <pre className="answer-text">{entry.content}</pre>
-                                        </div>
-                                    ) : (
-                                        <pre className="system-content">{entry.content}</pre>
-                                    )}
-                                </div>
-                            )}
-
-                            {entry.type === "loading" && (
-                                <div className="chat-bubble loading">
-                                    <Loader />
-                                    {/* Show model loading progress if available */}
-                                    {modelProgress && (
-                                        <ModelLoadingProgress progressData={modelProgress} />
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                    <div ref={messagesEndRef} />
+            <main className="app-main">
+                <div className="sidebar">
+                    <h3>Session History</h3>
+                    <ul className="session-list">
+                        {history
+                            .filter(entry => entry.type === "user-query")
+                            .map((entry) => (
+                                <li key={entry.id} className="history-item">
+                                    {entry.content.substring(0, 30)}
+                                    {entry.content.length > 30 ? "..." : ""}
+                                </li>
+                            ))}
+                    </ul>
                 </div>
-
-                {/* Input Field Fixed at Bottom */}
-                <div className="chat-input">
-                    {waitingForUserInput ? (
-                        <>
-                            <div className="question-prompt">
-                                <p><strong>Question:</strong> {currentQuestion}</p>
-                            </div>
-                            <QueryInput 
-                                onQuerySubmit={handleFollowUpSubmit} 
-                                placeholder="Type your answer here..."
-                                buttonText="Send Response"
-                            />
-                        </>
-                    ) : (
-                        <QueryInput 
-                            onQuerySubmit={handleQuerySubmit} 
-                            placeholder="Ask a medical question about a patient..."
-                            buttonText="Diagnose"
-                        />
+                
+                <div className="chat-container">
+                    {/* Debug panel */}
+                    {showDebugPanel && (
+                        <div className="debug-panel">
+                            <h3>Conversation History</h3>
+                            <pre className="debug-content">
+                                {JSON.stringify(conversationHistory, null, 2)}
+                            </pre>
+                            
+                            <h3>Current Thinking Process</h3>
+                            <pre className="debug-content">
+                                {thinking || 'No thinking process available'}
+                            </pre>
+                            
+                            <h3>Current Answer</h3>
+                            <pre className="debug-content">
+                                {displayedAnswer || 'No answer available'}
+                            </pre>
+                        </div>
                     )}
+                    
+                    <div className="chat-messages">
+                        {history.map((entry) => (
+                            <div key={entry.id} className="chat-bubble-container">
+                                <span className="timestamp">{entry.timestamp}</span>
+
+                                {entry.type === "user-query" && (
+                                    <div className="chat-bubble user-query">
+                                        <strong>Patient Query:</strong>
+                                        <p>{entry.content}</p>
+                                    </div>
+                                )}
+                                
+                                {entry.type === "user-response" && (
+                                    <div className="chat-bubble user-response">
+                                        <strong>Additional Information:</strong>
+                                        <p>{entry.content}</p>
+                                    </div>
+                                )}
+                                
+                                {entry.type === "system-message" && (
+                                    <div className="chat-bubble system-message">
+                                        <strong>{entry.title}:</strong>
+                                        {entry.title === "Reasoning" ? (
+                                            <div className="thinking-content">
+                                                <pre className="thinking-text">{entry.content}</pre>
+                                            </div>
+                                        ) : entry.title === "Diagnosis" ? (
+                                            <div className="answer-content">
+                                                <pre className={`answer-text ${entry.content.toLowerCase().includes('not met') || 
+                                                                      entry.content.toLowerCase().includes('negative') || 
+                                                                      entry.content.toLowerCase().includes('no ') || 
+                                                                      entry.content.toLowerCase().includes('normal') ? 
+                                                                      'negative-result' : ''}`}>
+                                                    {entry.content}
+                                                </pre>
+                                            </div>
+                                        ) : (
+                                            <pre className="system-content">{entry.content}</pre>
+                                        )}
+                                    </div>
+                                )}
+
+                                {entry.type === "loading" && (
+                                    <div className="chat-bubble loading">
+                                        <Loader />
+                                        {/* Show model loading progress if available */}
+                                        {modelProgress && (
+                                            <ModelLoadingProgress progressData={modelProgress} />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Input Field Fixed at Bottom */}
+                    <div className="chat-input">
+                        {waitingForUserInput ? (
+                            <>
+                                <div className="question-prompt">
+                                    <p><strong>Question:</strong> {currentQuestion}</p>
+                                </div>
+                                <QueryInput 
+                                    onQuerySubmit={handleFollowUpSubmit} 
+                                    placeholder="Type your answer here..."
+                                    buttonText="Send Response"
+                                />
+                            </>
+                        ) : (
+                            <QueryInput 
+                                onQuerySubmit={handleQuerySubmit} 
+                                placeholder="Ask a medical question about a patient..."
+                                buttonText="Diagnose"
+                            />
+                        )}
+                    </div>
                 </div>
             </main>
+            
+            {/* Theme toggle in bottom left corner */}
+            <div className="theme-toggle-container">
+                <ThemeToggle isDarkTheme={isDarkTheme} toggleTheme={toggleTheme} />
+            </div>
+            
+            {/* Criteria Modal */}
+            <CriteriaSelector 
+                isOpen={showCriteriaModal} 
+                onClose={toggleCriteriaModal} 
+                onCriteriaChange={handleCriteriaChange}
+            />
         </div>
     );
 };

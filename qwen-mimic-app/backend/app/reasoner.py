@@ -4,6 +4,7 @@ import logging
 from typing import Dict, Any, List, Optional
 
 from app.model_factory import ModelFactory
+from app.criteria import get_active_criteria
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -82,18 +83,29 @@ class LocalReasonerModel:
             patient_id = self._extract_patient_id_from_history(valid_history)
             logger.info(f"Retrieved patient ID from history: {patient_id}")
         
-        # Create system prompt for the reasoner with qSOFA criteria
+        # Get the active criteria configuration
+        active_criteria = get_active_criteria()
+        
+        # Create system prompt for the reasoner with dynamic criteria
         system_prompt = (
-            "Answer the qSOFA question based on the criteria provided below.\n"
+            f"Answer the {active_criteria['name']} assessment question based on the criteria provided below.\n"
             "You must conduct reasoning inside <think> and </think> first every time you get new information.\n" 
             "After reasoning, if you find you lack some knowledge, you can call a search engine by <search> query </search>, and it will return the top searched results between <information> and </information>.\n"
-            "You can search as many times as you want. If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer> without detailed illustrations. Example: <answer> SIRS present </answer>\n\n"
-            "qSOFA criteria:\n"
-            "- Respiratory Rate (RR) ≥ 22 breaths/min\n"
-            "- Systolic Blood Pressure (SBP) ≤ 100 mmHg\n"
-            "- Altered mentation (GCS verbal response is not \"Oriented\")\n"
-            " => If ≥2 => qSOFA"
+            "You can search as many times as you want. If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer> without detailed illustrations. Example: <answer> Assessment complete, patient shows signs of respiratory distress </answer>\n\n"
+            f"{active_criteria['name']} criteria to consider:\n"
         )
+        
+        # Add each criterion from the configuration
+        for criterion in active_criteria['criteria']:
+            system_prompt += f"{criterion}\n"
+        
+        # Add threshold if provided (not empty)
+        if 'threshold' in active_criteria and active_criteria['threshold'].strip():
+            system_prompt += f"\nThreshold rule: {active_criteria['threshold']}\n"
+            system_prompt += "Apply this threshold rule in your assessment.\n"
+        else:
+            # If no threshold provided, add guidance to use medical knowledge
+            system_prompt += "\nUse your medical knowledge to reason about these specific criteria and determine their clinical significance.\n"
         
         # Create fresh messages list with system prompt
         messages = [{"role": "system", "content": system_prompt}]
@@ -140,7 +152,8 @@ class LocalReasonerModel:
             "search_query": extracted["search_query"],
             "answer": extracted["answer"],
             "requires_information": bool(extracted["search_query"]),
-            "conversation_history": updated_history
+            "conversation_history": updated_history,
+            "criteria_used": active_criteria["name"]
         }
         
         # Add extra fields for all responses to ensure consistency
