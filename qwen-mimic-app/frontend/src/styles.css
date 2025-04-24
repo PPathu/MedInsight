@@ -62,10 +62,249 @@ code, pre {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
+/* App container and layout */
 .app-container {
-  display: flex;
-  height: 100vh;
-  width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+/* App header styles - Fixed positioning */
+.app-header {
+    background-color: var(--header-bg);
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Force left alignment for title */
+.left-section, .header-left {
+    flex: 0 0 auto !important;
+    margin-right: auto !important; /* Push to the far left */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+}
+
+/* App title specific styles */
+.app-title, .left-section h1, .header-left h1 {
+    text-align: left !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 1.8rem !important;
+    white-space: nowrap !important;
+    color: var(--dark-text-color);
+}
+
+/* Center criteria */
+.center-section, .header-center {
+    flex: 0 1 auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 20px !important;
+}
+
+/* Force right alignment for debug button */
+.right-section, .header-right {
+    flex: 0 0 auto !important;
+    margin-left: auto !important; /* Push to the far right */
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    text-align: right !important;
+}
+
+/* Active criteria display styles */
+.active-criteria {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--card-bg-alt);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.criteria-label {
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+}
+
+.criteria-name {
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.active-criteria-placeholder {
+    color: var(--secondary-text);
+    font-style: italic;
+}
+
+/* Theme toggle positioning */
+.theme-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+}
+
+/* Theme toggle container for bottom left positioning */
+.theme-toggle-container {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    z-index: 100;
+}
+
+/* Theme toggle container overrides the theme-toggle positioning */
+.theme-toggle-container .theme-toggle {
+    position: static;
+}
+
+/* Debug toggle button */
+.debug-toggle {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+    margin-right: 10px;
+}
+
+.debug-toggle:hover {
+    background-color: var(--button-hover);
+}
+
+/* Download PDF button in header */
+.download-pdf-btn {
+    background-color: #2980b9;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+
+.download-pdf-btn:hover {
+    background-color: #3498db;
+}
+
+.dark-theme .download-pdf-btn {
+    background-color: #2980b9;
+}
+
+.dark-theme .download-pdf-btn:hover {
+    background-color: #3498db;
+}
+
+.light-theme .download-pdf-btn {
+    background-color: #2980b9;
+    color: white;
+}
+
+.light-theme .download-pdf-btn:hover {
+    background-color: #3498db;
+}
+
+/* Criteria button */
+.criteria-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.criteria-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.dark-theme .criteria-btn {
+    background-color: var(--dark-primary-color);
+}
+
+.dark-theme .criteria-btn:hover {
+    background-color: var(--dark-primary-dark);
+}
+
+/* Responsive adjustments for header */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 15px;
+        padding: 10px 0;
+    }
+    
+    .left-section, .center-section, .right-section,
+    .header-left, .header-center, .header-right {
+        width: 100%;
+        justify-content: center;
+        flex: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+    
+    .left-section, .header-left {
+        justify-content: center;
+        order: 1;
+    }
+    
+    .center-section, .header-center {
+        order: 2;
+    }
+    
+    .right-section, .header-right {
+        justify-content: center;
+        order: 3;
+    }
+}
+
+.app-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 300px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
 }
 
 /* Sidebar styling */
@@ -255,11 +494,28 @@ code, pre {
 
 .system-message pre.system-content {
   white-space: pre-wrap;
-  font-family: inherit;
-  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 1.05em;
+  line-height: 1.6;
   overflow-x: auto;
-  padding: 5px 0;
-  color: inherit;
+  padding: 8px;
+  border-radius: 3px;
+  color: #ffffff;
+  background-color: rgba(52, 152, 219, 0.15);
+  font-weight: 500;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+.dark-theme .system-message pre.system-content {
+  color: #ffffff;
+  background-color: rgba(52, 152, 219, 0.15);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
+}
+
+.light-theme .system-message pre.system-content {
+  color: #2c3e50;
+  background-color: rgba(52, 152, 219, 0.1);
+  text-shadow: none;
 }
 
 /* Loading indicator styling */
@@ -416,6 +672,11 @@ code, pre {
     z-index: 10;
 }
 
+/* Remove old download button from debug panel */
+.download-history-btn {
+    display: none;
+}
+
 .debug-panel h3 {
     margin-top: 10px;
     margin-bottom: 5px;
@@ -464,9 +725,9 @@ code, pre {
 /* Thinking and Answer content styles */
 .thinking-content {
     margin-top: 8px;
-    border-left: 3px solid #3498db;
-    background-color: rgba(52, 152, 219, 0.1);
-    padding: 10px;
+    border-left: 4px solid #3498db;
+    background-color: rgba(52, 152, 219, 0.3);
+    padding: 12px;
     border-radius: 0 4px 4px 0;
 }
 
@@ -474,16 +735,18 @@ code, pre {
     font-family: 'Courier New', monospace;
     white-space: pre-wrap;
     margin: 0;
-    color: #3498db;
-    font-size: 0.9em;
-    line-height: 1.4;
+    color: #ffffff;
+    font-size: 1.05em;
+    line-height: 1.6;
+    font-weight: 600;
+    text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
 }
 
 .answer-content {
     margin-top: 8px;
-    border-left: 3px solid #2ecc71;
-    background-color: rgba(46, 204, 113, 0.1);
-    padding: 10px;
+    border-left: 4px solid #2ecc71;
+    background-color: rgba(46, 204, 113, 0.3);
+    padding: 12px;
     border-radius: 0 4px 4px 0;
 }
 
@@ -491,44 +754,84 @@ code, pre {
     font-family: 'Courier New', monospace;
     white-space: pre-wrap;
     margin: 0;
-    color: #2ecc71;
-    font-size: 0.9em;
-    line-height: 1.4;
+    color: #ffffff;
+    font-size: 1.05em;
+    line-height: 1.6;
     font-weight: bold;
+    text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+/* For negative diagnoses (conditions not met) */
+.answer-text.negative-result {
+    color: #f8d7da !important;
+    background-color: rgba(231, 76, 60, 0.2);
+    padding: 4px;
+    border-radius: 3px;
+}
+
+/* Change the border color for negative results */
+.answer-content:has(.negative-result) {
+    border-left-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.2);
 }
 
 /* Dark theme adjustments */
 .dark-theme .thinking-content {
-    background-color: rgba(52, 152, 219, 0.15);
+    background-color: rgba(52, 152, 219, 0.3);
+}
+
+.dark-theme .thinking-text {
+    color: #ffffff;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
 }
 
 .dark-theme .answer-content {
-    background-color: rgba(46, 204, 113, 0.15);
+    background-color: rgba(46, 204, 113, 0.3);
 }
 
-/* Light theme adjustments */
+.dark-theme .answer-text {
+    color: #ffffff;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Light theme overrides for better visibility */
 .light-theme .thinking-content {
-    background-color: rgba(52, 152, 219, 0.1);
+    background-color: rgba(52, 152, 219, 0.2);
 }
 
 .light-theme .thinking-text {
-    color: #2980b9;
+    color: #2c3e50;
+    text-shadow: none;
+    font-weight: 600;
 }
 
 .light-theme .answer-content {
-    background-color: rgba(46, 204, 113, 0.1);
+    background-color: rgba(46, 204, 113, 0.2);
 }
 
 .light-theme .answer-text {
-    color: #27ae60;
+    color: #2c3e50;
+    text-shadow: none;
+    font-weight: 600;
 }
 
-/* Theme toggle positioning */
-.theme-toggle {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 100;
+/* For negative diagnoses in dark theme */
+.dark-theme .answer-text.negative-result {
+    color: #f8d7da !important;
+    background-color: rgba(231, 76, 60, 0.25);
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
+}
+
+.dark-theme .answer-content:has(.negative-result) {
+    border-left-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.25);
+}
+
+/* For negative diagnoses in light theme */
+.light-theme .answer-text.negative-result {
+    color: #721c24 !important;
+    background-color: rgba(231, 76, 60, 0.15);
+    text-shadow: none;
 }
 
 /* User message container */
@@ -574,4 +877,350 @@ code, pre {
 
 .dark-theme .user-query strong, .dark-theme .user-response strong {
     color: #ecf0f1;
+}
+
+/* Criteria Selector Styles */
+.criteria-selector {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.criteria-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.criteria-header h3 {
+    margin: 0;
+    color: var(--primary-text);
+}
+
+.add-criteria-btn {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.add-criteria-btn:hover {
+    background-color: var(--button-hover);
+}
+
+.criteria-select-container {
+    margin-bottom: 15px;
+}
+
+.criteria-select-container label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--secondary-text);
+}
+
+.criteria-select-container select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: var(--primary-text);
+    font-size: 16px;
+}
+
+.add-criteria-form {
+    background-color: var(--card-bg-alt);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 15px;
+    border: 1px solid var(--border-color);
+}
+
+.add-criteria-form-container {
+    background-color: var(--card-bg-alt);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 15px;
+    border: 1px solid var(--border-color);
+}
+
+.add-criteria-form h4,
+.add-criteria-form-container h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--primary-text);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--secondary-text);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: var(--primary-text);
+    font-size: 14px;
+}
+
+.criterion-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.criterion-row input {
+    flex: 1;
+}
+
+.remove-btn, .add-btn {
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.remove-btn:disabled {
+    background-color: var(--disabled-color);
+    cursor: not-allowed;
+}
+
+.add-btn {
+    background-color: var(--success-color);
+    margin-top: 5px;
+}
+
+.add-btn:hover {
+    background-color: var(--success-hover);
+}
+
+.remove-btn:hover:not(:disabled) {
+    background-color: var(--danger-hover);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.submit-btn {
+    background-color: var(--primary-color);
+    color: var(--button-text);
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    margin-left: auto;
+}
+
+.submit-btn:hover {
+    background-color: var(--button-hover);
+}
+
+.cancel-btn {
+    background-color: var(--cancel-button-bg);
+    color: var(--cancel-button-text);
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
+    background-color: var(--cancel-button-hover);
+}
+
+.error-message {
+    color: var(--error-color);
+    background-color: var(--error-bg);
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+/* Modal Overlay and Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.criteria-modal {
+    background-color: var(--card-bg);
+    width: 90%;
+    max-width: 600px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    padding: 24px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.close-modal-btn {
+    background-color: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.close-modal-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme .close-modal-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.loading-indicator {
+    padding: 20px;
+    text-align: center;
+    color: var(--light-text);
+}
+
+.criteria-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.save-criteria-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.save-criteria-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.save-criteria-btn:disabled {
+    background-color: var(--disabled-color);
+    cursor: not-allowed;
+}
+
+.dark-theme .save-criteria-btn {
+    background-color: var(--dark-primary-color);
+}
+
+.dark-theme .save-criteria-btn:hover {
+    background-color: var(--dark-primary-dark);
+}
+
+.dark-theme .save-criteria-btn:disabled {
+    background-color: var(--dark-disabled-color);
+    cursor: not-allowed;
+}
+
+.debug-info {
+    margin-top: 8px;
+    padding: 4px;
+    color: #777;
+    font-size: 12px;
+    text-align: center;
+}
+
+.debug-info small {
+    word-break: break-all;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.modal-footer .cancel-btn {
+    margin-right: auto;
+}
+
+.modal-footer .primary-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.modal-footer .primary-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.dark-theme .modal-footer {
+    border-top-color: var(--dark-border-color);
+}
+
+.dark-theme .modal-footer .primary-btn {
+    background-color: var(--dark-primary-color);
+}
+
+.dark-theme .modal-footer .primary-btn:hover {
+    background-color: var(--dark-primary-dark);
+}
+
+.app-title {
+    text-align: left;
+    margin: 0;
+    padding: 0;
+    font-size: 1.8rem;
+    white-space: nowrap;
+    position: relative;
+    color: var(--primary-text);
+}
+
+.dark-theme .app-title {
+    color: var(--dark-text-color);
+}
+
+.light-theme .app-title {
+    color: var(--text-color);
 }

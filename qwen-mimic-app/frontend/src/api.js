@@ -278,3 +278,80 @@ export const provideInfo = async (userResponse, conversationHistory) => {
         };
     }
 };
+
+// Criteria management endpoints
+export const getCriteriaList = async () => {
+    try {
+        const response = await retryAxios(() => apiClient.get('/criteria'));
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching criteria list:", error);
+        return { error: "Failed to fetch criteria list from server." };
+    }
+};
+
+export const getActiveCriteria = async (timestamp = null) => {
+    try {
+        // Add a timestamp parameter to prevent caching
+        const url = timestamp ? `/criteria/active?t=${timestamp}` : '/criteria/active';
+        console.log(`Fetching active criteria with URL: ${url}`);
+        
+        const response = await retryAxios(() => apiClient.get(url));
+        console.log('getActiveCriteria response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching active criteria:", error);
+        return { error: "Failed to fetch active criteria from server." };
+    }
+};
+
+export const setActiveCriteria = async (criteriaKey) => {
+    try {
+        console.log(`Setting active criteria to key: "${criteriaKey}" with direct fetch call`);
+        
+        // Use fetch directly to avoid any axios issues
+        const response = await fetch(`${BASE_URL}/criteria/active`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ key: criteriaKey })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Direct fetch response:', data);
+        
+        return data;
+    } catch (error) {
+        console.error("Error setting active criteria:", error);
+        return { error: "Failed to set active criteria." };
+    }
+};
+
+export const addCustomCriteria = async (criteriaData) => {
+    try {
+        const response = await retryAxios(() => 
+            apiClient.post('/criteria/custom', criteriaData)
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error adding custom criteria:", error);
+        return { error: "Failed to add custom criteria." };
+    }
+};
+
+export const deleteCustomCriteria = async (criteriaKey) => {
+    try {
+        const response = await retryAxios(() => 
+            apiClient.delete(`/criteria/custom/${criteriaKey}`)
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting custom criteria:", error);
+        return { error: "Failed to delete custom criteria." };
+    }
+};
