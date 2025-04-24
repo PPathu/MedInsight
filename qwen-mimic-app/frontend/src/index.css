@@ -11,3 +11,71 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Model Loading Progress Styles */
+.model-loading-progress {
+  margin-top: 15px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  padding: 12px;
+  width: 100%;
+}
+
+.model-loading-progress h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.progress-container {
+  margin-bottom: 8px;
+}
+
+.progress-label {
+  font-size: 0.8rem;
+  margin-bottom: 3px;
+  color: var(--text-color);
+  display: flex;
+  justify-content: space-between;
+}
+
+.progress-bar-container {
+  height: 12px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #2a6ad2, #5a8fde);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.progress-percentage {
+  position: absolute;
+  right: 5px;
+  top: 0;
+  font-size: 0.7rem;
+  color: var(--text-inverse);
+  line-height: 12px;
+}
+
+.dark-theme .progress-bar {
+  background: linear-gradient(90deg, #4a7cd5, #7aafff);
+}
+
+.dark-theme .model-loading-progress {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-theme .progress-bar-container {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.chat-bubble.loading {
+  min-height: 100px;
+}

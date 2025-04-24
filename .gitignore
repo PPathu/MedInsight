@@ -1,20 +1,88 @@
-# Ignore virtual environments and Python libraries
+# Virtual environments
 env/
 venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+fresh_env/
+*_env/
+.venv/
+*.env
 
-# Ignore large PyTorch libraries
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Log files
+*.log
+logs/
+backend_*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Large libraries and binaries
 *.dylib
 *.so
 *.dll
+*.pyd
+node_modules/
 
-echo "mimic-app/backend/env/lib/python3.12/site-packages/torch/lib/libtorch_cpu.dylib" >> .gitignore
-echo "env/" >> .gitignore
-echo "venv/" >> .gitignore
-echo "__pycache__/" >> .gitignore
-*.dylib
-.env
+# Specific large files
+mimic-app/backend/env/lib/python3.12/site-packages/torch/lib/libtorch_cpu.dylib
+
+# Database files
+*.db
+*.db-journal
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Documentation builds
+docs/_build/
+docs/site/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# macOS specific
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows specific
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
 

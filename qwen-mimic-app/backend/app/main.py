@@ -1,28 +1,127 @@
-from fastapi import FastAPI
+import logging
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.query import get_qwen_generated_code, execute_sql_query  
+from app.query import get_qwen_generated_code, execute_sql_query
+from app.model_detector import HardwareDetector
+from app.diagnose import router as diagnose_router
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Create FastAPI app
 app = FastAPI()
 
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  
+    allow_origins=["*"],  # Allow all origins for testing
     allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["*"],  
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+# Startup event
+@app.on_event("startup")
+async def startup_event():
+    """Run at app startup - detect hardware and log info"""
+    logger.info("🚀 Starting MedInsight backend server")
+    
+    # Detect system capabilities
+    system_info = HardwareDetector.detect_system()
+    
+    # Log detailed system information
+    logger.info("=" * 50)
+    logger.info("SYSTEM INFORMATION")
+    logger.info("=" * 50)
+    logger.info(f"OS: {system_info['os']}")
+    logger.info(f"Architecture: {system_info['architecture']}")
+    logger.info(f"Python version: {system_info['python_version']}")
+    
+    if system_info.get('torch_available', False):
+        logger.info(f"PyTorch version: {system_info.get('torch_version', 'Unknown')}")
+        if system_info.get('cuda_available', False):
+            logger.info(f"CUDA available: Yes (version {system_info.get('cuda_version', 'Unknown')})")
+            logger.info(f"GPU: {system_info.get('gpu_name', 'Unknown')}")
+        elif system_info.get('mps_available', False):
+            logger.info("Apple MPS available: Yes (M1/M2 Mac acceleration)")
+        else:
+            logger.info("GPU acceleration: Not available, using CPU")
+    else:
+        logger.info("PyTorch: Not available")
+    
+    logger.info(f"Recommended backend: {system_info.get('recommended_backend', 'unknown')}")
+    logger.info("=" * 50)
+    
+    # Test if VLLM is available
+    can_use_vllm, vllm_reason = HardwareDetector.can_use_vllm()
+    logger.info(f"VLLM available: {'Yes' if can_use_vllm else 'No'}")
+    if not can_use_vllm:
+        logger.info(f"VLLM status: {vllm_reason}")
+    
+    # Test if transformers is available
+    can_use_transformers, transformers_reason = HardwareDetector.can_use_transformers()
+    logger.info(f"Transformers available: {'Yes' if can_use_transformers else 'No'}")
+    if not can_use_transformers:
+        logger.info(f"Transformers status: {transformers_reason}")
+    
+    logger.info("=" * 50)
+    logger.info("Server started successfully")
 
 @app.get("/")
 def read_root():
     return {"message": "FastAPI Backend Running"}
 
+@app.get("/system-info")
+def get_system_info():
+    """Endpoint to get system information for the frontend"""
+    system_info = HardwareDetector.detect_system()
+    
+    # Add additional backend information
+    can_use_vllm, vllm_reason = HardwareDetector.can_use_vllm()
+    can_use_transformers, transformers_reason = HardwareDetector.can_use_transformers()
+    
+    return {
+        "os": system_info["os"],
+        "architecture": system_info["architecture"],
+        "python_version": system_info["python_version"],
+        "torch_available": system_info.get("torch_available", False),
+        "cuda_available": system_info.get("cuda_available", False),
+        "mps_available": system_info.get("mps_available", False),
+        "is_apple_silicon": system_info.get("is_apple_silicon", False),
+        "gpu_name": system_info.get("gpu_name", "N/A"),
+        "recommended_backend": system_info.get("recommended_backend", "cpu"),
+        "vllm_available": can_use_vllm,
+        "transformers_available": can_use_transformers,
+        "vllm_status": vllm_reason,
+        "transformers_status": transformers_reason
+    }
+
 @app.post("/query")
 def process_query(user_query: dict):
-    query_text = user_query.get("user_query")
-    generated_sql = get_qwen_generated_code(query_text)
-    result = execute_sql_query(generated_sql)
-    return {"generated_code": generated_sql, "result": result}
+    try:
+        query_text = user_query.get("user_query")
+        if not query_text:
+            raise ValueError("User query is empty or missing")
+            
+        generated_sql = get_qwen_generated_code(query_text)
+        result = execute_sql_query(generated_sql)
+        return {"generated_code": generated_sql, "result": result}
+    except ValueError as e:
+        logger.error(f"Value error in query: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        logger.error(f"Runtime error in query: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error in query: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
-# ----- NEW: Mount the Diagnose Router -----
-from app.diagnose import router as diagnose_router
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 app.include_router(diagnose_router)
