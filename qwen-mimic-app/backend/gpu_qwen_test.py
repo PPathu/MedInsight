@@ -1,6 +1,10 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import sys
+import os
+import time
+import logging
+from app.prompts import TEST_SQL_QUESTION
 
 def check_gpu():
     """Check if CUDA is available and print detailed information"""
@@ -80,7 +84,7 @@ def test_qwen_gpu():
         print(f"Model is on device: {next(model.parameters()).device}")
         
         # Create a SQL prompt for testing
-        prompt = "Generate an SQL query to find all patients diagnosed with pneumonia in the last year."
+        prompt = TEST_SQL_QUESTION
         print(f"\nPrompt: {prompt}")
         
         # Tokenize input and move to device
@@ -108,6 +112,74 @@ def test_qwen_gpu():
         import traceback
         traceback.print_exc()
         return False
+
+def main():
+    """Test loading a Qwen model on the GPU"""
+    start_time = time.time()
+    
+    # Get model name from environment variable or use default
+    model_name = os.environ.get("MODEL_NAME", "Qwen/Qwen1.5-7B-Chat")
+    print(f"\nTesting model: {model_name}")
+    
+    # Check for GPU
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print(f"Using CUDA - {torch.cuda.get_device_name(0)}")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+        print("Using MPS (Metal Performance Shaders)")
+    else:
+        device = torch.device("cpu")
+        print("WARNING: Using CPU (slow) - no GPU detected")
+    
+    try:
+        print("\nLoading tokenizer...")
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        
+        print("Loading model...")
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch.float16,
+            device_map="auto" if device.type == "cuda" else None,
+            low_cpu_mem_usage=True
+        )
+        
+        # Move model to device if not using device_map="auto"
+        if device.type != "cuda":
+            model = model.to(device)
+            
+        print(f"Model loaded in {time.time() - start_time:.2f} seconds")
+        
+        # Create a SQL prompt for testing
+        prompt = TEST_SQL_QUESTION
+        print(f"\nPrompt: {prompt}")
+        
+        # Generate text
+        start_gen = time.time()
+        inputs = tokenizer(prompt, return_tensors="pt").to(device)
+        
+        output = model.generate(
+            **inputs, 
+            max_new_tokens=150,
+            temperature=0.7,
+            top_p=0.9
+        )
+        
+        output_text = tokenizer.decode(output[0], skip_special_tokens=True)
+        gen_time = time.time() - start_gen
+        
+        print(f"\nGenerated text in {gen_time:.2f} seconds:")
+        print(output_text)
+        print(f"\nTotal tokens: {len(output[0])}, Tokens per second: {len(output[0])/gen_time:.2f}")
+        
+        print(f"\nTotal runtime: {time.time() - start_time:.2f} seconds")
+        print("Test completed successfully!")
+        
+    except Exception as e:
+        print(f"Error during test: {str(e)}")
+        return 1
+        
+    return 0
 
 if __name__ == "__main__":
     print("=" * 80)
@@ -139,4 +211,6 @@ if __name__ == "__main__":
         print("   (replace cu118 with your CUDA version)")
         print("4. Check that your GPU has enough memory (try a smaller model if needed)")
         print("5. If using CUDA out of memory, try a smaller model like:")
-        print("   model_name = \"Qwen/Qwen2-0.5B\"") 
+        print("   model_name = \"Qwen/Qwen2-0.5B\"")
+    
+    sys.exit(main()) 

@@ -6,6 +6,7 @@ import io
 from typing import List, Dict, Any, Optional
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from app.model_progress import progress_monitor, monitor_stderr_for_progress
+from app.prompts import format_messages
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -85,23 +86,6 @@ class TransformersModelHandler:
             logger.error(f"Error loading model: {str(e)}")
             raise RuntimeError(f"Failed to load model: {e}")
             
-    def _format_messages(self, messages: List[Dict[str, str]]) -> str:
-        """Format messages into a prompt the model can understand"""
-        prompt = ""
-        for msg in messages:
-            role = msg["role"]
-            content = msg["content"]
-            if role == "user":
-                prompt += f"<|im_start|>user\n{content}<|im_end|>\n"
-            elif role == "assistant":
-                prompt += f"<|im_start|>assistant\n{content}<|im_end|>\n"
-            else:
-                prompt += f"<|im_start|>{role}\n{content}<|im_end|>\n"
-        
-        # Add the final assistant prefix to prime the generation
-        prompt += "<|im_start|>assistant\n"
-        return prompt
-        
     def generate(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         """
         Generate a response from the model
@@ -116,8 +100,8 @@ class TransformersModelHandler:
             Dictionary with generated text and metadata
         """
         try:
-            # Format messages into a prompt
-            prompt = self._format_messages(messages)
+            # Format messages into a prompt using the centralized format_messages
+            prompt = format_messages(messages)
             
             # Set generation parameters
             temperature = kwargs.get('temperature', 0.5)

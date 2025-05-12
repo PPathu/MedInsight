@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional
 
 from app.config import MIMIC_DB_PATH
 from app.model_factory import ModelFactory
+from app.prompts import get_sql_generation_prompt
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -38,35 +39,8 @@ class SqlGenerationHandler:
         # Strip special markers if present
         cleaned_query = query.strip('*').strip()
         
-        # Create prompt for SQL generation
-        prompt = (
-            "Write only a valid SQL query (no explanation, no formatting, no comments) to answer the following and ensure that the code has a semicolon at the end "
-            "question using a SQLite-compatible MIMIC-IV dataset.\n"
-            "Assume that the database contains the following tables: `admissions`, `diagnoses_icd`, `patients`, `prescriptions`, `procedures_icd`.\n"
-            "Use the correct table(s) based on the question.\n"
-            "Column names include:\n"
-            "- admissions(subject_id, hadm_id, admittime, dischtime, deathtime, admission_type, admit_provider_id, admission_location, discharge_location, insurance, language, marital_status, race, edregtime, edouttime, hospital_expire_flag)\n"
-            "- diagnoses_icd(subject_id, hadm_id, seq_num, icd_code, icd_version)\n"
-            "- patients(subject_id, gender, anchor_age, anchor_year, anchor_year_group, dod)\n"
-            "- prescriptions(subject_id, hadm_id, pharmacy_id, poe_id, poe_seq, order_provider_id, starttime, stoptime, drug_type, drug, formulary_drug_cd, gsn, ndc, prod_strength, form_rx, dose_val_rx, dose_unit_rx, form_val_disp, form_unit_disp, doses_per_24_hrs, route)\n"
-            "- procedures_icd(subject_id, hadm_id, seq_num, chartdate, icd_code, icd_version)\n"
-            f"Question: {cleaned_query}\n"
-            "Important:\n"
-            "- If the question involves prescriptions, select the `drug` column (which stores the medication names) along with if asked for it starttime and stoptime.\n"
-            "- Use standard SQL syntax supported by SQLite.\n"
-            "- Do NOT use T-SQL functions like DATEADD or NOW(). Instead, use strftime() or DATE().\n"
-            "- Ensure that date-related queries use the correct column names (`admittime`, `dischtime`, `deathtime`, `starttime`, `stoptime`, `chartdate`).\n"
-            "- If the question involves counts, use COUNT(*). If it requires an average, use AVG().\n"
-            "- If filtering by date, use DATE(column_name) or strftime('%Y-%m-%d', column_name).\n"
-            "- If multiple tables are required, use INNER JOINs on `subject_id` or `hadm_id` where appropriate.\n"
-            "- If a query requests data that may be missing, use COALESCE() to return 'N/A' instead of NULL.\n"
-            "- Do NOT generate multiple queries. Only return ONE valid SQL statement.\n"
-            "- Do NOT include ```sql or any formatting, only return the raw SQL statement.\n"
-            "- Ensure you have a semicolon at the end of the raw SQL statement.\n"
-            "Example:\n"
-            "SELECT COUNT(*) FROM admissions WHERE subject_id = 10009 AND DATE(admittime) >= DATE('now', '-1 month');\n"
-            "Now, generate the correct SQL query:"
-        )
+        # Get SQL prompt from central prompts file
+        prompt = get_sql_generation_prompt(cleaned_query)
         
         # Generate SQL code
         messages = [{"role": "user", "content": prompt}]

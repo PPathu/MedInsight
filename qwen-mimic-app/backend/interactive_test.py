@@ -2,6 +2,14 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import re
 import platform
+import os
+import sys
+import time
+import logging
+from app.prompts import format_messages
+
+# Add the parent directory to the path to import app modules
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 class SimpleReasonerModel:
     def __init__(self):
@@ -203,7 +211,88 @@ def interactive_session():
                 if user_choice != "1":
                     break
 
+def run_interactive_session():
+    """Run an interactive session with the model"""
+    # Load the model
+    model_name = os.environ.get("MODEL_NAME", "tossowski/MedAgentReasoner-3B-Chat")
+    if len(sys.argv) > 1:
+        model_name = sys.argv[1]
+    
+    print(f"\nLoading model: {model_name}")
+    model = SimpleReasonerModel()
+    
+    print("\nEntering interactive mode. Type 'exit' to quit.")
+    
+    # Get the initial prompt from the user
+    print("\nEnter your question:")
+    user_prompt = input("> ")
+    
+    # Create the system prompt - emphasize sequential information gathering
+    system_prompt = (
+        "You are a medical AI assistant trained to ask clarifying questions. "
+        "Your goal is to gather information in a step-by-step manner before giving a final assessment. "
+        "First, understand the initial concern, then ask specific follow-up questions to gather all "
+        "relevant clinical information. Ask one question at a time. "
+        "Don't make assumptions - ask for clarity. "
+        "After you have enough information, provide a concise assessment. "
+        "\n\n"
+        f"Question: {user_prompt}"
+    )
+    
+    # Format messages using the central format_messages function
+    messages = [
+        {"role": "system", "content": "You are a medical AI assistant trained to ask clarifying questions."},
+        {"role": "user", "content": user_prompt}
+    ]
+    formatted_prompt = format_messages(messages)
+    
+    # Get the model's response
+    response = model.get_response(formatted_prompt)
+    print(f"\nAssistant: {response}\n")
+    
+    # Store the conversation history
+    conversation_history = formatted_prompt + response
+    
+    # Continue the conversation until the user exits
+    while True:
+        print("\nEnter your response (or 'exit' to quit):")
+        user_input = input("> ")
+        
+        if user_input.lower() == 'exit':
+            print("Exiting...")
+            break
+        
+        # Format the follow-up message
+        messages.append({"role": "assistant", "content": response})
+        messages.append({"role": "user", "content": user_input})
+        new_prompt = format_messages(messages)
+        
+        # Get the model's response
+        response = model.get_response(new_prompt)
+        print(f"\nAssistant: {response}\n")
+        
+        # Update conversation history
+        conversation_history = new_prompt + response
+        messages[-2]["content"] = response  # Update the assistant's last message
+
 if __name__ == "__main__":
+    print("=" * 80)
+    print("INTERACTIVE MODEL TEST")
+    print("=" * 80)
+    print("This script allows interactive testing with a medical language model")
+    print("=" * 80)
+    
+    try:
+        run_interactive_session()
+    except KeyboardInterrupt:
+        print("\nSession terminated by user.")
+    except Exception as e:
+        print(f"\nError: {str(e)}")
+        print("\nTry setting a different model with:")
+        print("export MODEL_NAME=tossowski/MedAgentReasoner-3B-Chat  # Smaller model")
+        print("Or run with a specific model:")
+        print("python interactive_test.py tossowski/MedAgentReasoner-3B-Chat")
+
     # Check available hardware
     print("=" * 80)
     print("HARDWARE DIAGNOSTICS")

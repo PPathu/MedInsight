@@ -5,6 +5,7 @@ from typing import Dict, Any, List, Optional
 
 from app.model_factory import ModelFactory
 from app.criteria import get_active_criteria
+from app.prompts import create_criteria_prompt, CONTINUATION_PROMPT
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -86,26 +87,12 @@ class LocalReasonerModel:
         # Get the active criteria configuration
         active_criteria = get_active_criteria()
         
-        # Create system prompt for the reasoner with dynamic criteria
-        system_prompt = (
-            f"Answer the {active_criteria['name']} assessment question based on the criteria provided below.\n"
-            "You must conduct reasoning inside <think> and </think> first every time you get new information.\n" 
-            "After reasoning, if you find you lack some knowledge, you can call a search engine by <search> query </search>, and it will return the top searched results between <information> and </information>.\n"
-            "You can search as many times as you want. If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer> without detailed illustrations. Example: <answer> Assessment complete, patient shows signs of respiratory distress </answer>\n\n"
-            f"{active_criteria['name']} criteria to consider:\n"
+        # Create system prompt for the reasoner with dynamic criteria using central prompts
+        system_prompt = create_criteria_prompt(
+            criteria_name=active_criteria['name'],
+            criteria_list=active_criteria['criteria'],
+            threshold=active_criteria.get('threshold', '')
         )
-        
-        # Add each criterion from the configuration
-        for criterion in active_criteria['criteria']:
-            system_prompt += f"{criterion}\n"
-        
-        # Add threshold if provided (not empty)
-        if 'threshold' in active_criteria and active_criteria['threshold'].strip():
-            system_prompt += f"\nThreshold rule: {active_criteria['threshold']}\n"
-            system_prompt += "Apply this threshold rule in your assessment.\n"
-        else:
-            # If no threshold provided, add guidance to use medical knowledge
-            system_prompt += "\nUse your medical knowledge to reason about these specific criteria and determine their clinical significance.\n"
         
         # Create fresh messages list with system prompt
         messages = [{"role": "system", "content": system_prompt}]
@@ -119,8 +106,9 @@ class LocalReasonerModel:
                 if message.get("role") != "system":
                     messages.append(message)
             
-            # Add the new user response with context
-            messages.append({"role": "user", "content": f"I'm providing additional information: {user_input}. Please continue your assessment based on this new information."})
+            # Add the new user response with context using central prompt
+            continuation_prompt = CONTINUATION_PROMPT.format(user_input=user_input)
+            messages.append({"role": "user", "content": continuation_prompt})
         
         # Generate response based on messages
         response_data = self.model_handler.generate(messages, max_tokens=1000, temperature=0.2)

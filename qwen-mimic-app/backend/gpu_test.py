@@ -1,6 +1,10 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import sys
+import os
+import time
+import logging
+from app.prompts import TEST_MEDICAL_QUESTION
 
 def check_gpu():
     """Check if CUDA is available and print detailed information"""
@@ -79,7 +83,7 @@ def test_model_gpu():
         print(f"Model is on device: {next(model.parameters()).device}")
         
         # Create a simple prompt for testing
-        prompt = "Answer this medical question: What is qSOFA?"
+        prompt = TEST_MEDICAL_QUESTION
         print(f"\nPrompt: {prompt}")
         
         # Tokenize input and move to device
@@ -108,33 +112,73 @@ def test_model_gpu():
         traceback.print_exc()
         return False
 
-if __name__ == "__main__":
-    print("=" * 80)
-    print("GPU MODEL TEST")
-    print("=" * 80)
-    print("This script attempts to explicitly use the GPU for the model")
-    print("=" * 80)
+def main():
+    """Test loading a medical model on the GPU"""
+    start_time = time.time()
     
-    # First check GPU
-    has_gpu = check_gpu()
+    # Get model name from environment variable or use default
+    model_name = os.environ.get("MODEL_NAME", "meta-llama/Llama-2-7b-chat-hf")
+    print(f"\nTesting model: {model_name}")
     
-    if not has_gpu:
-        print("\n⚠️ No GPU detected. This will run VERY slowly on CPU.")
-        user_input = input("Continue anyway? (y/n): ")
-        if user_input.lower() != 'y':
-            print("Exiting...")
-            sys.exit(0)
-    
-    # Run the test
-    success = test_model_gpu()
-    
-    if success:
-        print("\nTest completed successfully!")
+    # Check for GPU
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print(f"Using CUDA - {torch.cuda.get_device_name(0)}")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+        print("Using MPS (Metal Performance Shaders)")
     else:
-        print("\nTest failed. Try these steps:")
-        print("1. Make sure your GPU drivers are properly installed")
-        print("2. Install CUDA toolkit compatible with your PyTorch version")
-        print("3. Run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118")
-        print("   (replace cu118 with your CUDA version)")
-        print("4. Check that your GPU has enough memory for this model (at least 6GB)")
-        print("5. Try with a smaller model by changing the model name") 
+        device = torch.device("cpu")
+        print("WARNING: Using CPU (slow) - no GPU detected")
+    
+    try:
+        print("\nLoading tokenizer...")
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        
+        print("Loading model...")
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch.float16,
+            device_map="auto" if device.type == "cuda" else None,
+            low_cpu_mem_usage=True
+        )
+        
+        # Move model to device if not using device_map="auto"
+        if device.type != "cuda":
+            model = model.to(device)
+            
+        print(f"Model loaded in {time.time() - start_time:.2f} seconds")
+        
+        # Create a simple prompt for testing
+        prompt = TEST_MEDICAL_QUESTION
+        print(f"\nPrompt: {prompt}")
+        
+        # Generate text
+        start_gen = time.time()
+        inputs = tokenizer(prompt, return_tensors="pt").to(device)
+        
+        output = model.generate(
+            **inputs, 
+            max_new_tokens=100,
+            temperature=0.7,
+            top_p=0.9
+        )
+        
+        output_text = tokenizer.decode(output[0], skip_special_tokens=True)
+        gen_time = time.time() - start_gen
+        
+        print(f"\nGenerated text in {gen_time:.2f} seconds:")
+        print(output_text)
+        print(f"\nTotal tokens: {len(output[0])}, Tokens per second: {len(output[0])/gen_time:.2f}")
+        
+        print(f"\nTotal runtime: {time.time() - start_time:.2f} seconds")
+        print("GPU test completed successfully!")
+        
+    except Exception as e:
+        print(f"Error during test: {str(e)}")
+        return 1
+        
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main()) 
