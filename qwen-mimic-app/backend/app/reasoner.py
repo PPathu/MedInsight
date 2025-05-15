@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional
 from app.model_factory import ModelFactory
 from app.criteria import get_active_criteria
 from app.prompts import create_criteria_prompt, CONTINUATION_PROMPT
+from app.query import get_qwen_generated_code, execute_sql_query
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -47,17 +48,21 @@ class LocalReasonerModel:
         logger.info(f"Successfully extracted patient ID: {patient_id}")
         return patient_id
     
-    def process_reasoning(self, user_input: str, conversation_history: List[Dict[str, str]] = None) -> dict:
+    def process_reasoning(self, user_input: str, conversation_history: List[Dict[str, str]] = None, use_sql: bool = False) -> dict:
         """
         Process reasoning for both initial queries and follow-up information.
         
         Args:
             user_input: The user's query or response
             conversation_history: Optional conversation history for continuing an existing session
+            use_sql: Whether to use SQL retriever for database information
             
         Returns:
             Dictionary with reasoning results
         """
+        # Log the SQL flag value for debugging
+        logger.info(f"SQL retriever flag value: {use_sql} (type: {type(use_sql)})")
+        
         # Validate and clean conversation history
         if conversation_history is None:
             conversation_history = []
@@ -72,7 +77,7 @@ class LocalReasonerModel:
         is_new_conversation = len(valid_history) == 0
         
         # Log the conversation type for debugging
-        logger.info(f"Processing as {'new conversation' if is_new_conversation else 'continuation'}")
+        logger.info(f"Processing as {'new conversation' if is_new_conversation else 'continuation'} (use_sql: {use_sql})")
         
         if is_new_conversation:
             logger.info(f"Starting new reasoning process for: {user_input}")
@@ -97,18 +102,71 @@ class LocalReasonerModel:
         # Create fresh messages list with system prompt
         messages = [{"role": "system", "content": system_prompt}]
         
-        if is_new_conversation:
-            # For new conversations, just add the user's initial query
-            messages.append({"role": "user", "content": user_input})
+        database_info = None
+        
+        # If SQL mode is enabled, query the database
+        if use_sql:
+            try:
+                # Generate SQL query based on the user's input and the patient ID
+                sql_query_for_patient = f"Generate SQL query to get medical data for patient {patient_id} related to: {user_input}"
+                logger.info(f"Generating SQL query: {sql_query_for_patient}")
+                
+                # Get SQL query from Qwen
+                sql_query = get_qwen_generated_code(sql_query_for_patient)
+                logger.info(f"Generated SQL query: {sql_query}")
+                
+                # Execute the query
+                query_results = execute_sql_query(sql_query)
+                
+                # Format the results
+                if isinstance(query_results, list):
+                    result_str = "\n".join([str(row) for row in query_results[:10]])  # Limit to first 10 rows to avoid overwhelming the model
+                    if len(query_results) > 10:
+                        result_str += f"\n... and {len(query_results) - 10} more rows"
+                else:
+                    result_str = str(query_results)
+                
+                database_info = f"DATABASE INFORMATION:\nQuery: {sql_query}\nResults: {result_str}"
+                logger.info(f"Database info retrieved successfully for patient {patient_id}")
+                
+                # Add database information to the conversation context for the model
+                if is_new_conversation:
+                    # For new conversations, include the database info in the prompt
+                    messages.append({"role": "user", "content": f"{user_input}\n\n{database_info}"})
+                else:
+                    # For continuations, add the conversation history first
+                    for message in valid_history:
+                        if message.get("role") != "system":
+                            messages.append(message)
+                    
+                    # Then add the new user response with database info
+                    continuation_prompt = CONTINUATION_PROMPT.format(user_input=f"{user_input}\n\n{database_info}")
+                    messages.append({"role": "user", "content": continuation_prompt})
+            except Exception as e:
+                logger.error(f"Error in SQL retrieval: {str(e)}")
+                database_info = f"ERROR IN SQL RETRIEVAL: {str(e)}"
+                
+                # Fall back to regular behavior if SQL fails
+                if is_new_conversation:
+                    messages.append({"role": "user", "content": user_input})
+                else:
+                    for message in valid_history:
+                        if message.get("role") != "system":
+                            messages.append(message)
+                    
+                    continuation_prompt = CONTINUATION_PROMPT.format(user_input=user_input)
+                    messages.append({"role": "user", "content": continuation_prompt})
         else:
-            # For continuations, add the conversation history (excluding system messages)
-            for message in valid_history:
-                if message.get("role") != "system":
-                    messages.append(message)
-            
-            # Add the new user response with context using central prompt
-            continuation_prompt = CONTINUATION_PROMPT.format(user_input=user_input)
-            messages.append({"role": "user", "content": continuation_prompt})
+            # Regular behavior without SQL
+            if is_new_conversation:
+                messages.append({"role": "user", "content": user_input})
+            else:
+                for message in valid_history:
+                    if message.get("role") != "system":
+                        messages.append(message)
+                
+                continuation_prompt = CONTINUATION_PROMPT.format(user_input=user_input)
+                messages.append({"role": "user", "content": continuation_prompt})
         
         # Generate response based on messages
         response_data = self.model_handler.generate(messages, max_tokens=1000, temperature=0.2)
@@ -133,16 +191,28 @@ class LocalReasonerModel:
             updated_history.append({"role": "user", "content": user_input})
             updated_history.append({"role": "assistant", "content": response_text})
         
+        # For SQL mode, if there's a search query but we already have database info,
+        # we can suppress the search query to avoid asking the user for more info
+        requires_information = bool(extracted["search_query"])
+        if use_sql and requires_information and database_info:
+            requires_information = False
+            logger.info("Suppressing search query since SQL mode is enabled and database info is available")
+        
         # Prepare response
         result = {
             "full_response": response_text,
             "thinking": extracted["thinking"],
-            "search_query": extracted["search_query"],
+            "search_query": extracted["search_query"] if not use_sql else None,
             "answer": extracted["answer"],
-            "requires_information": bool(extracted["search_query"]),
+            "requires_information": requires_information,
             "conversation_history": updated_history,
-            "criteria_used": active_criteria["name"]
+            "criteria_used": active_criteria["name"],
+            "use_sql": use_sql
         }
+        
+        # Add database information if SQL retriever was used
+        if use_sql and database_info:
+            result["database_info"] = database_info
         
         # Add extra fields for all responses to ensure consistency
         result["patient_id"] = patient_id
@@ -182,10 +252,10 @@ class LocalReasonerModel:
         return "unknown"
 
     # Keep these as wrapper methods for backward compatibility
-    def start_reasoning(self, user_prompt: str) -> dict:
+    def start_reasoning(self, user_prompt: str, use_sql: bool = False) -> dict:
         """Start the reasoning process for a medical query."""
-        return self.process_reasoning(user_prompt)
+        return self.process_reasoning(user_prompt, use_sql=use_sql)
     
-    def continue_reasoning(self, user_response: str, conversation_history: List[Dict[str, str]]) -> dict:
+    def continue_reasoning(self, user_response: str, conversation_history: List[Dict[str, str]], use_sql: bool = False) -> dict:
         """Continue the reasoning process with user's response to a previous query."""
-        return self.process_reasoning(user_response, conversation_history)
+        return self.process_reasoning(user_response, conversation_history, use_sql=use_sql)

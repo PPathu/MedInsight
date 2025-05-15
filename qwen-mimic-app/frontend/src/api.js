@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "http://127.0.0.1:8000";
+// Use localhost instead of 127.0.0.1 which may help with some connection issues
+const BASE_URL = "http://localhost:8000";
 const QUERY_URL = `${BASE_URL}/query`; 
 const DIAGNOSE_URL = `${BASE_URL}/diagnose`;
 const PROVIDE_INFO_URL = `${BASE_URL}/provide_info`;
@@ -8,7 +9,7 @@ const PROVIDE_INFO_URL = `${BASE_URL}/provide_info`;
 // Configure axios with longer timeout and retry capability
 const apiClient = axios.create({
     baseURL: BASE_URL,
-    timeout: 30000, // 30 seconds timeout
+    timeout: 60000, // 60 seconds timeout (increased from 30s)
     headers: {
         'Content-Type': 'application/json',
     }
@@ -47,7 +48,7 @@ export const sendQuery = async (userQuery) => {
 };
 
 // Start a diagnosis session with the database-first approach
-export const startDiagnosis = async (query) => {
+export const startDiagnosis = async (query, useSqlRetriever = false) => {
     try {
         // First check if the server is reachable with our test endpoint
         const testResponse = await retryAxios(() => apiClient.get(`/diagnose-test`));
@@ -57,7 +58,10 @@ export const startDiagnosis = async (query) => {
         let progressCallback = null;
         
         const customPromise = new Promise((resolve, reject) => {
-            const eventSource = new EventSource(`${BASE_URL}/diagnose?query=${encodeURIComponent(query)}`);
+            // Fix the URL to ensure use_sql is properly passed as a boolean string
+            const url = `${BASE_URL}/diagnose?query=${encodeURIComponent(query)}&use_sql=${useSqlRetriever ? 'true' : 'false'}`;
+            console.log("Using URL with SQL flag:", url);
+            const eventSource = new EventSource(url);
             const result = {
                 status: [],
                 thinking: "",
@@ -156,7 +160,7 @@ export const startDiagnosis = async (query) => {
 };
 
 // Send user-provided information when the model asks for additional details
-export const provideInfo = async (userResponse, conversationHistory) => {
+export const provideInfo = async (userResponse, conversationHistory, useSqlRetriever = false) => {
     try {
         // Ensure conversation_history is always an array
         let history = [];
@@ -196,11 +200,12 @@ export const provideInfo = async (userResponse, conversationHistory) => {
         // Use the POST endpoint only for providing information, as GET doesn't support sending complex objects
         const customPromise = new Promise((resolve, reject) => {
             // Send the POST request containing both the user response and conversation history
-            console.log(`Sending POST request to ${PROVIDE_INFO_URL} with ${history.length} messages`);
+            console.log(`Sending POST request to ${PROVIDE_INFO_URL} with ${history.length} messages and SQL flag: ${useSqlRetriever}`);
             
             apiClient.post(PROVIDE_INFO_URL, {
                 user_response: userResponse,
-                conversation_history: history
+                conversation_history: history, 
+                use_sql: useSqlRetriever
             })
             .then(response => {
                 console.log("Successfully received provide_info response");
@@ -353,5 +358,30 @@ export const deleteCustomCriteria = async (criteriaKey) => {
     } catch (error) {
         console.error("Error deleting custom criteria:", error);
         return { error: "Failed to delete custom criteria." };
+    }
+};
+
+// Check if backend is available
+export const checkBackendStatus = async () => {
+    try {
+        const response = await fetch(`${BASE_URL}/health`, { 
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+            mode: 'cors',
+            timeout: 5000
+        });
+        
+        if (response.ok) {
+            console.log("Backend server is available");
+            return true;
+        } else {
+            console.error("Backend server returned an error response:", response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error("Backend server is not available:", error);
+        return false;
     }
 };

@@ -16,10 +16,12 @@ logger = logging.getLogger(__name__)
 # Define data models
 class DiagnoseRequest(BaseModel):
     query: str
+    use_sql: Optional[bool] = False
 
 class ProvideInfoRequest(BaseModel):
     user_response: str
     conversation_history: Union[str, List[Dict[str, Any]]]
+    use_sql: Optional[bool] = False
     
     @validator('conversation_history')
     def validate_conversation_history(cls, v):
@@ -46,6 +48,11 @@ async def generate_response(response_content):
             # Send thinking component first if available
             if "thinking" in response_content and response_content.get('thinking'):
                 yield f"data: {json.dumps({'type': 'thinking', 'content': response_content.get('thinking', '')})}\n\n"
+                await asyncio.sleep(0.1)
+            
+            # Send database information if available (for SQL mode)
+            if "database_info" in response_content and response_content.get('database_info'):
+                yield f"data: {json.dumps({'type': 'database', 'content': response_content.get('database_info', '')})}\n\n"
                 await asyncio.sleep(0.1)
             
             # Send search query if available
@@ -139,15 +146,29 @@ async def diagnose_test():
 
 @router.post("/diagnose")
 @router.get("/diagnose")
-async def diagnose(request: DiagnoseRequest = None, query: str = None):
+async def diagnose(request: DiagnoseRequest = None, query: str = None, use_sql: str = "false"):
     # Support both POST body and GET query parameter
     user_query = query or (request.query if request else None)
+    
+    # Get use_sql from either query params or request body, with better parsing
+    if request and request.use_sql is not None:
+        # If from request body object, use directly (it's already parsed as bool)
+        use_sql_retriever = request.use_sql
+        logger.info(f"Using SQL flag from request body: {use_sql_retriever}")
+    else:
+        # Parse the string parameter from URL query
+        if isinstance(use_sql, str):
+            use_sql_retriever = use_sql.lower() in ('true', 't', 'yes', 'y', '1')
+            logger.info(f"Parsed SQL flag from string: '{use_sql}' → {use_sql_retriever}")
+        else:
+            use_sql_retriever = bool(use_sql)
+            logger.info(f"Converted SQL flag to bool: {use_sql_retriever}")
     
     if not user_query:
         raise HTTPException(status_code=400, detail="No query provided")
     
     try:
-        logger.info(f"Processing query: {user_query}")
+        logger.info(f"Processing query: {user_query} (use_sql: {use_sql_retriever})")
         
         # Start a streaming response immediately to show progress
         async def response_stream():
@@ -163,7 +184,8 @@ async def diagnose(request: DiagnoseRequest = None, query: str = None):
             
             try:
                 # Start the reasoning process using process_reasoning with no history
-                response = local_reasoner.process_reasoning(user_query)
+                # Pass the use_sql parameter to the reasoning process
+                response = local_reasoner.process_reasoning(user_query, use_sql=use_sql_retriever)
                 logger.info("Generated initial reasoning response")
                 
                 # Send the model's response
@@ -196,9 +218,10 @@ async def provide_info_post(request: ProvideInfoRequest):
         # Extract data from request
         user_input = request.user_response
         conversation_history = request.conversation_history
+        use_sql_retriever = request.use_sql
         
         # Log what we received for debugging
-        logger.info(f"Received user_response: {user_input}")
+        logger.info(f"Received user_response: {user_input} (use_sql: {use_sql_retriever}, type: {type(use_sql_retriever)})")
         history_length = len(conversation_history) if isinstance(conversation_history, list) else 0
         logger.info(f"Received conversation_history with {history_length} entries")
         
@@ -229,7 +252,8 @@ async def provide_info_post(request: ProvideInfoRequest):
         logger.info(f"Proceeding with {len(valid_items)} valid messages in conversation history")
         
         # Continue the reasoning using process_reasoning with conversation history
-        response = local_reasoner.process_reasoning(user_input, conversation_history)
+        # Pass the use_sql parameter to the reasoning process
+        response = local_reasoner.process_reasoning(user_input, conversation_history, use_sql=use_sql_retriever)
         logger.info("Generated continuation response for POST request")
         
         # Return the full response directly as JSON

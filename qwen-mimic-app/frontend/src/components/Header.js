@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getActiveCriteria } from '../api';
 
-const Header = ({ toggleDebugPanel, showDebugPanel, toggleCriteriaModal, forceUpdate, downloadChatHistory }) => {
+const Header = ({ toggleDebugPanel, showDebugPanel, toggleCriteriaModal, forceUpdate, downloadChatHistory, useSqlRetriever, toggleSqlRetriever }) => {
     const [activeCriteria, setActiveCriteria] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -99,7 +99,7 @@ const Header = ({ toggleDebugPanel, showDebugPanel, toggleCriteriaModal, forceUp
                         {isLoading ? (
                             <span className="loading-text">Loading...</span>
                         ) : error ? (
-                            <span className="error-text">{error}</span>
+                            <span className="error-text" title={error}>Connection Error</span>
                         ) : activeCriteria ? (
                             <div className="criteria-list">
                                 <span className="criteria-name">
@@ -107,10 +107,18 @@ const Header = ({ toggleDebugPanel, showDebugPanel, toggleCriteriaModal, forceUp
                                 </span>
                             </div>
                         ) : (
-                            <span className="active-criteria-placeholder">No criteria selected</span>
+                            <span className="active-criteria-placeholder">Connect to backend server</span>
                         )}
                         <button onClick={toggleCriteriaModal} className="criteria-btn">
                             Change
+                        </button>
+                        <button 
+                            onClick={toggleSqlRetriever} 
+                            className={`model-toggle-btn ${useSqlRetriever ? 'active' : ''}`}
+                            title={useSqlRetriever ? "Using SQL database retriever (click to disable)" : "Using only conversation (click to enable SQL mode)"}
+                        >
+                            <span className="sql-indicator"></span>
+                            {useSqlRetriever ? "SQL: ON" : "SQL: OFF"}
                         </button>
                     </div>
                 </div>

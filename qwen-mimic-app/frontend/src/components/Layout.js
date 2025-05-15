@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import QueryInput from "./QueryInput";
-import { sendQuery, startDiagnosis, provideInfo } from "../api";
+import { sendQuery, startDiagnosis, provideInfo, checkBackendStatus } from "../api";
 import Loader from "./Loader";
 import CriteriaSelector from "./CriteriaSelector";
 import Header from "./Header";
@@ -59,6 +59,8 @@ const Layout = () => {
     const [showDebugPanel, setShowDebugPanel] = useState(false); // State for toggling debug panel
     const [showCriteriaModal, setShowCriteriaModal] = useState(false);
     const [criteriaRefreshKey, setCriteriaRefreshKey] = useState(0); // Used to force header to refresh
+    const [useSqlRetriever, setUseSqlRetriever] = useState(false); // State for SQL retriever toggle
+    const [backendAvailable, setBackendAvailable] = useState(true); // Track backend availability
     const messagesEndRef = useRef(null);
 
     // Toggle between dark and light themes
@@ -74,6 +76,13 @@ const Layout = () => {
     // Toggle criteria modal
     const toggleCriteriaModal = () => {
         setShowCriteriaModal(!showCriteriaModal);
+    };
+    
+    // Toggle SQL retriever
+    const toggleSqlRetriever = () => {
+        const newState = !useSqlRetriever;
+        console.log(`Toggling SQL retriever: ${useSqlRetriever} → ${newState}`);
+        setUseSqlRetriever(newState);
     };
     
     // Handle criteria change (force header to refresh)
@@ -99,6 +108,29 @@ const Layout = () => {
             document.body.classList.remove('dark-theme');
         }
     }, [isDarkTheme]);
+
+    // Check backend availability
+    useEffect(() => {
+        const checkBackend = async () => {
+            const isAvailable = await checkBackendStatus();
+            setBackendAvailable(isAvailable);
+            
+            // If not available, check again every 10 seconds
+            if (!isAvailable) {
+                const intervalId = setInterval(async () => {
+                    const available = await checkBackendStatus();
+                    setBackendAvailable(available);
+                    if (available) {
+                        clearInterval(intervalId);
+                    }
+                }, 10000);
+                
+                return () => clearInterval(intervalId);
+            }
+        };
+        
+        checkBackend();
+    }, []);
 
     // Handle initial query from user
     const handleQuerySubmit = async (userQuery) => {
@@ -128,7 +160,7 @@ const Layout = () => {
             setModelProgress(null);
             
             // Start the diagnostic process and register progress callback
-            const diagnosisPromise = startDiagnosis(userQuery);
+            const diagnosisPromise = startDiagnosis(userQuery, useSqlRetriever);
             
             // Register progress callback if available
             if (typeof diagnosisPromise.setProgressCallback === 'function') {
@@ -332,7 +364,7 @@ const Layout = () => {
             setModelProgress(null);
             
             // Send the additional information to the backend with progress callback
-            const infoPromise = provideInfo(additionalInfo, history);
+            const infoPromise = provideInfo(additionalInfo, history, useSqlRetriever);
             
             // Register progress callback if available
             if (typeof infoPromise.setProgressCallback === 'function') {
@@ -530,10 +562,12 @@ const Layout = () => {
                 key={criteriaRefreshKey} // Add key to force re-render when criteria changes
                 forceUpdate={criteriaRefreshKey} // Pass the key as a prop to trigger useEffect
                 isDarkTheme={isDarkTheme}
-                toggleDebugPanel={toggleDebugPanel}
+                toggleDebugPanel={toggleDebugPanel} 
                 showDebugPanel={showDebugPanel}
                 toggleCriteriaModal={toggleCriteriaModal}
                 downloadChatHistory={downloadChatHistory} // Add the download function as a prop
+                useSqlRetriever={useSqlRetriever}
+                toggleSqlRetriever={toggleSqlRetriever}
             />
 
             <main className="app-main">
@@ -569,6 +603,18 @@ const Layout = () => {
                             <pre className="debug-content">
                                 {displayedAnswer || 'No answer available'}
                             </pre>
+                        </div>
+                    )}
+                    
+                    {/* Backend connection warning */}
+                    {!backendAvailable && (
+                        <div className="backend-warning">
+                            <strong>Backend server is not running!</strong>
+                            <p>Start the backend server with:</p>
+                            <pre>cd qwen-mimic-app/backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000</pre>
+                            <button onClick={() => checkBackendStatus().then(setBackendAvailable)}>
+                                Check Connection
+                            </button>
                         </div>
                     )}
                     
@@ -616,18 +662,23 @@ const Layout = () => {
 
                                 {entry.type === "loading" && (
                                     <div className="chat-bubble loading">
-                                        <Loader />
-                                        {/* Show model loading progress if available */}
-                                        {modelProgress && (
-                                            <ModelLoadingProgress progressData={modelProgress} />
-                                        )}
+                                        <div className="loading-dots">
+                                            <span className="dot"></span>
+                                            <span className="dot"></span>
+                                            <span className="dot"></span>
+                                        </div>
                                     </div>
+                                )}
+                                
+                                {/* Show model loading progress if available */}
+                                {modelProgress && (
+                                    <ModelLoadingProgress progressData={modelProgress} />
                                 )}
                             </div>
                         ))}
                         <div ref={messagesEndRef} />
                     </div>
-
+                    
                     {/* Input Field Fixed at Bottom */}
                     <div className="chat-input">
                         {waitingForUserInput ? (
@@ -658,11 +709,13 @@ const Layout = () => {
             </div>
             
             {/* Criteria Modal */}
-            <CriteriaSelector 
-                isOpen={showCriteriaModal} 
-                onClose={toggleCriteriaModal} 
-                onCriteriaChange={handleCriteriaChange}
-            />
+            {showCriteriaModal && (
+                <CriteriaSelector 
+                    isOpen={showCriteriaModal}
+                    onClose={toggleCriteriaModal}
+                    onCriteriaChange={handleCriteriaChange}
+                />
+            )}
         </div>
     );
 };
